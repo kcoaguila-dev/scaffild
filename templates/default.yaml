@@ -1,0 +1,14 @@
+name: Default Project
+description: Standard video editing template definition
+structure:
+  - 01_SEQUENCES
+  - 02_FOOTAGE:
+      - A_ROLL
+      - B_ROLL
+      - AUDIO
+  - 03_AUDIO:
+      - MUSIC
+      - SFX
+      - VO
+  - 04_GFX
+  - 05_EXPORTS
