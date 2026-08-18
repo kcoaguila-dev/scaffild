@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
-import { Settings, Save } from 'lucide-react';
+import { Settings, Save, FileCode2 } from 'lucide-react';
 import { stringify } from 'yaml';
+import TemplateTree from './TemplateTree';
 
 interface Template {
   name: string;
@@ -12,10 +13,11 @@ interface Template {
 export default function TemplateManager() {
   const [templates, setTemplates] = useState<string[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState('default');
-  const [, setTemplateData] = useState<Template | null>(null);
+  const [templateData, setTemplateData] = useState<Template | null>(null);
   const [yamlText, setYamlText] = useState('');
   const [status, setStatus] = useState('');
   const [newTemplateName, setNewTemplateName] = useState('');
+  const [showYamlEditor, setShowYamlEditor] = useState(false);
 
   const loadTemplates = async () => {
     try {
@@ -46,13 +48,16 @@ export default function TemplateManager() {
 
   const handleSave = async () => {
     try {
-      // In a real app, you'd parse the yamlText back to JSON to save it
-      // For simplicity, we just save the string (would need backend update or frontend parse)
-      // We'll use a yaml parser library if needed, but for now we'll just parse JSON if it was a tree editor
-      // Let's assume we parse it:
       const yaml = await import('yaml');
-      const parsed = yaml.parse(yamlText);
-      await invoke('save_template', { name: selectedTemplate, template: parsed });
+      // If we are in yaml mode, we try to parse it. Otherwise, we trust templateData
+      let dataToSave;
+      if (showYamlEditor) {
+        dataToSave = yaml.parse(yamlText);
+      } else {
+        dataToSave = templateData;
+      }
+
+      await invoke('save_template', { name: selectedTemplate, template: dataToSave });
       setStatus('Saved successfully!');
       if (!templates.includes(selectedTemplate)) {
           loadTemplates();
@@ -60,6 +65,27 @@ export default function TemplateManager() {
       setTimeout(() => setStatus(''), 3000);
     } catch (e: any) {
       setStatus(`Error saving: ${e}`);
+    }
+  };
+
+  const handleTreeChange = (newStructure: any[]) => {
+    if (templateData) {
+      const newTemplateData = { ...templateData, structure: newStructure };
+      setTemplateData(newTemplateData);
+      setYamlText(stringify(newTemplateData));
+    }
+  };
+
+  const handleYamlChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newText = e.target.value;
+    setYamlText(newText);
+    try {
+      import('yaml').then(yaml => {
+        const parsed = yaml.parse(newText);
+        setTemplateData(parsed);
+      });
+    } catch (err) {
+      // Ignore parse errors while typing
     }
   };
 
@@ -138,13 +164,34 @@ export default function TemplateManager() {
           {status && <div className="mt-4 text-sm text-center font-medium text-green-400">{status}</div>}
         </div>
 
-        <div className="w-2/3">
-          <label className="block text-sm font-medium mb-1">YAML Editor</label>
-          <textarea
-            value={yamlText}
-            onChange={e => setYamlText(e.target.value)}
-            className="w-full h-[400px] bg-gray-800 border border-gray-700 rounded p-4 font-mono text-sm focus:outline-none focus:border-blue-500"
-          />
+        <div className="w-2/3 flex flex-col">
+          <div className="flex items-center justify-between mb-2">
+            <label className="block text-sm font-medium">Structure</label>
+            <button
+              onClick={() => setShowYamlEditor(!showYamlEditor)}
+              className="text-xs flex items-center gap-1 text-gray-400 hover:text-white transition-colors"
+            >
+              <FileCode2 size={14} />
+              {showYamlEditor ? "Show Visual Editor" : "Advanced: Edit as YAML"}
+            </button>
+          </div>
+
+          <div className="flex-grow bg-gray-800 border border-gray-700 rounded overflow-hidden">
+            {!showYamlEditor ? (
+              <div className="p-4 h-[400px] overflow-y-auto">
+                <TemplateTree
+                  structure={templateData?.structure || []}
+                  onChange={handleTreeChange}
+                />
+              </div>
+            ) : (
+              <textarea
+                value={yamlText}
+                onChange={handleYamlChange}
+                className="w-full h-[400px] bg-gray-800 p-4 font-mono text-sm focus:outline-none focus:border-blue-500 text-gray-200"
+              />
+            )}
+          </div>
         </div>
       </div>
     </div>
