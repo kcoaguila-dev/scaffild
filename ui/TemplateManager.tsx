@@ -4,9 +4,12 @@ import { Settings, Save, FileCode2 } from 'lucide-react';
 import { stringify } from 'yaml';
 import TemplateTree from './TemplateTree';
 
+import { TemplateParam } from './ProjectBuilder';
+
 interface Template {
   name: string;
   description?: string;
+  parameters?: TemplateParam[];
   structure: any[];
 }
 
@@ -181,6 +184,7 @@ export default function TemplateManager() {
               <div className="p-4 h-[400px] overflow-y-auto">
                 <TemplateTree
                   structure={templateData?.structure || []}
+                  parameters={templateData?.parameters}
                   onChange={handleTreeChange}
                 />
               </div>

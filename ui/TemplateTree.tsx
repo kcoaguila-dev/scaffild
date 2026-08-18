@@ -42,12 +42,15 @@ export function toRawStructure(nodes: TreeNodeData[]): any[] {
   });
 }
 
+import { TemplateParam } from './ProjectBuilder';
+
 interface TemplateTreeProps {
   structure: any[];
+  parameters?: TemplateParam[];
   onChange: (newStructure: any[]) => void;
 }
 
-export default function TemplateTree({ structure, onChange }: TemplateTreeProps) {
+export default function TemplateTree({ structure, parameters, onChange }: TemplateTreeProps) {
   const [nodes, setNodes] = useState<TreeNodeData[]>([]);
   const [isInternalUpdate, setIsInternalUpdate] = useState(false);
 
@@ -80,6 +83,7 @@ export default function TemplateTree({ structure, onChange }: TemplateTreeProps)
         <SortableTree
           nodes={nodes}
           parentId="root"
+          parameters={parameters}
           onChange={triggerChange}
         />
       )}
@@ -93,7 +97,7 @@ export default function TemplateTree({ structure, onChange }: TemplateTreeProps)
   );
 }
 
-function SortableTree({ nodes, parentId, onChange }: { nodes: TreeNodeData[], parentId: string, onChange: (nodes: TreeNodeData[]) => void }) {
+function SortableTree({ nodes, parentId, parameters, onChange }: { nodes: TreeNodeData[], parentId: string, parameters?: TemplateParam[], onChange: (nodes: TreeNodeData[]) => void }) {
   return (
     <div className="flex flex-col gap-0.5">
       {nodes.map((node, index) => (
@@ -102,6 +106,7 @@ function SortableTree({ nodes, parentId, onChange }: { nodes: TreeNodeData[], pa
           node={node}
           index={index}
           parentId={parentId}
+          parameters={parameters}
           onUpdate={(updatedNode) => {
             const newNodes = [...nodes];
             newNodes[index] = updatedNode;
@@ -132,6 +137,7 @@ function NodeItem({
   node,
   index,
   parentId,
+  parameters,
   onUpdate,
   onDelete,
   onAddSibling,
@@ -140,6 +146,7 @@ function NodeItem({
   node: TreeNodeData;
   index: number;
   parentId: string;
+  parameters?: TemplateParam[];
   onUpdate: (node: TreeNodeData) => void;
   onDelete: () => void;
   onAddSibling: () => void;
@@ -255,10 +262,14 @@ function NodeItem({
             title="Insert Variable"
           >
             <option value="">{`{ }`}</option>
-            <option value="id">id</option>
-            <option value="title">title</option>
-            <option value="date">date</option>
-            <option value="editor">editor</option>
+            {(parameters || [
+              { name: 'id', label: 'Project ID' },
+              { name: 'title', label: 'Title' },
+              { name: 'date', label: 'Date' },
+              { name: 'editor', label: 'Editor' }
+            ]).map(p => (
+              <option key={p.name} value={p.name}>{p.name}</option>
+            ))}
           </select>
 
           <button onClick={onAddSibling} className="p-1.5 text-gray-400 hover:text-blue-400 hover:bg-gray-600 rounded transition-colors" title="Add Sibling">
@@ -280,6 +291,7 @@ function NodeItem({
           <SortableTree
             nodes={node.children}
             parentId={node.id}
+            parameters={parameters}
             onChange={(newChildren) => onUpdate({ ...node, children: newChildren })}
           />
         </div>
