@@ -8,8 +8,12 @@ use std::collections::HashMap;
 
 #[derive(serde::Deserialize)]
 pub struct ProjectParams {
+    /// Holds the defined parameters explicitly rendered in the UI and defined by the template's schema.
     #[serde(flatten)]
     pub params: HashMap<String, String>,
+
+    /// Fallback for arbitrary ad-hoc tokens passed from external integrations (like ExtendScript)
+    /// that are not strictly defined as part of the formal template schema parameters.
     #[serde(default)]
     pub custom: HashMap<String, String>,
 }
