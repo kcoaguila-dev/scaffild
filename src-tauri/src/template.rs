@@ -57,7 +57,7 @@ impl Template {
     }
 }
 
-fn get_templates_dir() -> PathBuf {
+pub fn get_templates_dir() -> PathBuf {
     let mut path = dirs::home_dir().unwrap_or_else(|| PathBuf::from("."));
     path.push(".slate");
     path.push("templates");
@@ -65,6 +65,35 @@ fn get_templates_dir() -> PathBuf {
         let _ = fs::create_dir_all(&path);
     }
     path
+}
+
+pub fn get_template_assets_dir(template_name: &str) -> PathBuf {
+    let safe_name = sanitize_name(template_name);
+    let mut path = get_templates_dir();
+    path.push(format!("{}_files", safe_name));
+    if !path.exists() {
+        let _ = fs::create_dir_all(&path);
+    }
+    path
+}
+
+pub fn copy_template_files_recursive(src: &Path, dst: &Path) {
+    if !src.exists() || !src.is_dir() {
+        return;
+    }
+    for entry in walkdir::WalkDir::new(src).into_iter().filter_map(|e| e.ok()) {
+        if let Ok(rel) = entry.path().strip_prefix(src) {
+            let target = dst.join(rel);
+            if entry.file_type().is_dir() {
+                let _ = fs::create_dir_all(&target);
+            } else if entry.file_type().is_file() {
+                if let Some(parent) = target.parent() {
+                    let _ = fs::create_dir_all(parent);
+                }
+                let _ = fs::copy(entry.path(), &target);
+            }
+        }
+    }
 }
 
 #[tauri::command]
@@ -185,6 +214,10 @@ pub fn pick_folder_and_scan() -> Result<Option<ScannedFolderResult>, String> {
             .unwrap_or("imported_template")
             .to_string();
         let structure = scan_dir_recursive(&folder_path)?;
+
+        let assets_dir = get_template_assets_dir(&name);
+        copy_template_files_recursive(&folder_path, &assets_dir);
+
         Ok(Some(ScannedFolderResult {
             name,
             path: path_str,
