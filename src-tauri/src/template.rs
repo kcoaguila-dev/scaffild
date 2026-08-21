@@ -87,3 +87,50 @@ pub fn save_template(name: String, template: Template) -> Result<(), String> {
     fs::write(&path, content).map_err(|e| e.to_string())?;
     Ok(())
 }
+
+fn scan_dir_recursive(dir: &std::path::Path) -> Result<Vec<serde_yaml::Value>, String> {
+    let mut result = Vec::new();
+    let entries = fs::read_dir(dir).map_err(|e| e.to_string())?;
+    let mut sorted_entries: Vec<_> = entries.filter_map(|e| e.ok()).collect();
+    sorted_entries.sort_by_key(|e| e.file_name());
+
+    for entry in sorted_entries {
+        let file_type = entry.file_type().map_err(|e| e.to_string())?;
+        let file_name = entry.file_name().to_string_lossy().to_string();
+
+        // Skip hidden files/directories
+        if file_name.starts_with('.') {
+            continue;
+        }
+
+        if file_type.is_dir() {
+            let children = scan_dir_recursive(&entry.path())?;
+            if children.is_empty() {
+                result.push(serde_yaml::Value::String(file_name));
+            } else {
+                let mut map = serde_yaml::Mapping::new();
+                map.insert(
+                    serde_yaml::Value::String(file_name),
+                    serde_yaml::Value::Sequence(children),
+                );
+                result.push(serde_yaml::Value::Mapping(map));
+            }
+        } else if file_type.is_file() {
+            result.push(serde_yaml::Value::String(file_name));
+        }
+    }
+    Ok(result)
+}
+
+#[tauri::command]
+pub fn scan_directory_structure(path: String) -> Result<Vec<serde_yaml::Value>, String> {
+    let root = PathBuf::from(&path);
+    if !root.exists() {
+        return Err(format!("Path does not exist: {}", path));
+    }
+    if !root.is_dir() {
+        return Err(format!("Path is not a directory: {}", path));
+    }
+    scan_dir_recursive(&root)
+}
+

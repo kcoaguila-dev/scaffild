@@ -21,6 +21,19 @@ pub struct ProjectParams {
 fn replace_tokens(text: &str, params: &ProjectParams) -> String {
     let mut result = text.to_string();
 
+    let id_val = params.params.get("id").map(|s| s.as_str()).unwrap_or("");
+    let title_val = params.params.get("title").map(|s| s.as_str()).unwrap_or("");
+    let project_composite = if !id_val.is_empty() && !title_val.is_empty() {
+        format!("{}_{}", id_val, title_val)
+    } else if !title_val.is_empty() {
+        title_val.to_string()
+    } else {
+        id_val.to_string()
+    };
+
+    result = result.replace("[project]", &project_composite);
+    result = result.replace("{{project}}", &project_composite);
+
     for (key, val) in &params.params {
         let token = format!("{{{{{}}}}}", key);
         result = result.replace(&token, val);
@@ -34,12 +47,52 @@ fn replace_tokens(text: &str, params: &ProjectParams) -> String {
     result
 }
 
+fn is_file_path(name: &str) -> bool {
+    let p = Path::new(name);
+    if let Some(ext) = p.extension().and_then(|e| e.to_str()) {
+        matches!(
+            ext.to_lowercase().as_str(),
+            "prproj" | "aep" | "psd" | "ai" | "c4d" | "txt" | "md" | "rtf" | "json" | "xml" | "csv" | "docx" | "pdf" | "mp4" | "mov" | "wav" | "mp3"
+        )
+    } else {
+        false
+    }
+}
+
+fn create_template_file(file_path: &Path, file_name: &str, params: &ProjectParams) -> Result<(), String> {
+    if let Some(parent) = file_path.parent() {
+        fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+    }
+
+    let ext = file_path.extension().and_then(|e| e.to_str()).unwrap_or("").to_lowercase();
+    match ext.as_str() {
+        "prproj" => {
+            create_dummy_prproj(file_path)?;
+        }
+        "txt" | "md" => {
+            let mut content = format!("# Project: {}\n", file_name);
+            for (k, v) in &params.params {
+                content.push_str(&format!("{}: {}\n", k, v));
+            }
+            fs::write(file_path, content).map_err(|e| e.to_string())?;
+        }
+        _ => {
+            fs::File::create(file_path).map_err(|e| e.to_string())?;
+        }
+    }
+    Ok(())
+}
+
 fn build_structure(base_path: &Path, node: &serde_yaml::Value, params: &ProjectParams) -> Result<(), String> {
     match node {
         serde_yaml::Value::String(name) => {
             let replaced = replace_tokens(name, params);
             let p = base_path.join(&replaced);
-            fs::create_dir_all(&p).map_err(|e| format!("Failed to create dir {}: {}", p.display(), e))?;
+            if is_file_path(&replaced) {
+                create_template_file(&p, &replaced, params)?;
+            } else {
+                fs::create_dir_all(&p).map_err(|e| format!("Failed to create dir {}: {}", p.display(), e))?;
+            }
         }
         serde_yaml::Value::Mapping(map) => {
             for (key, val) in map {

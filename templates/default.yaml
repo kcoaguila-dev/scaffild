@@ -1,14 +1,23 @@
-name: Default Project
-description: Standard video editing template definition
+name: Video Editing
+description: Standard video editing post-production template
+parameters:
+  - id
+  - title
+  - date
+  - editor
 structure:
-  - 01_SEQUENCES
+  - 01_PROJECT_FILES:
+      - "[project].prproj"
   - 02_FOOTAGE:
       - A_ROLL
       - B_ROLL
-      - AUDIO
   - 03_AUDIO:
       - MUSIC
       - SFX
       - VO
-  - 04_GFX
+  - 04_GRAPHICS:
+      - IMAGES
+      - THUMBNAILS:
+          - "[project]_Thumbnail.psd"
+      - TITLES
   - 05_EXPORTS
