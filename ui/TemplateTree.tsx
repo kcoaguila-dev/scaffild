@@ -356,27 +356,39 @@ function NodeItem({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const [selectionRange, setSelectionRange] = useState<[number, number] | null>(null);
+
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onUpdate({ ...node, name: e.target.value });
   };
 
   const insertVariable = (variable: string) => {
     const varText = variable === 'project' ? '[project]' : `{{${variable}}}`;
-    if (inputRef.current) {
-      const start = inputRef.current.selectionStart || 0;
-      const end = inputRef.current.selectionEnd || 0;
+    const dotIndex = node.name.lastIndexOf('.');
+
+    if (selectionRange && selectionRange[0] !== selectionRange[1]) {
+      // If user highlighted a portion of text, replace the selection
+      const [start, end] = selectionRange;
       const newName = node.name.substring(0, start) + varText + node.name.substring(end);
       onUpdate({ ...node, name: newName });
+    } else if (dotIndex > 0 && isFileItem(node.name)) {
+      // It's a file with an extension (e.g. _PROJECT_TEMPLATE.prproj)
+      const ext = node.name.substring(dotIndex);
+      const stem = node.name.substring(0, dotIndex);
 
-      setTimeout(() => {
-        if (inputRef.current) {
-          inputRef.current.focus();
-          const newPos = start + varText.length;
-          inputRef.current.setSelectionRange(newPos, newPos);
-        }
-      }, 0);
+      if (stem.includes('_PROJECT_TEMPLATE') || stem.includes('PROJECT_TEMPLATE') || stem === 'template' || stem === 'New File') {
+        const remainingSuffix = stem.replace(/_?PROJECT_TEMPLATE/i, '');
+        onUpdate({ ...node, name: `${varText}${remainingSuffix}${ext}` });
+      } else {
+        onUpdate({ ...node, name: `${varText}${ext}` });
+      }
     } else {
-      onUpdate({ ...node, name: node.name + varText });
+      // It's a folder or plain name
+      if (node.name === 'New Folder' || node.name.includes('PROJECT_TEMPLATE')) {
+        onUpdate({ ...node, name: varText });
+      } else {
+        onUpdate({ ...node, name: `${node.name}_${varText}` });
+      }
     }
   };
 
@@ -463,6 +475,10 @@ function NodeItem({
           ref={inputRef}
           value={node.name}
           onChange={handleNameChange}
+          onSelect={(e) => {
+            const target = e.target as HTMLInputElement;
+            setSelectionRange([target.selectionStart || 0, target.selectionEnd || 0]);
+          }}
           onClick={(e) => e.stopPropagation()}
           placeholder="Folder or File Name"
           className={`bg-transparent border border-transparent hover:border-gray-600 focus:border-blue-500 focus:bg-gray-900/60 rounded px-1.5 py-0.5 text-xs flex-grow min-w-[140px] font-medium outline-none transition-colors ${
