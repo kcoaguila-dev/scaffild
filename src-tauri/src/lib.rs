@@ -10,6 +10,7 @@ pub fn run() {
             template::list_templates,
             template::load_template,
             template::save_template,
+            template::delete_template,
             template::scan_directory_structure,
             builder::build_project,
             ingest::ingest_media

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { invoke } from '@tauri-apps/api/core';
-import { Settings, Save, FileCode2, Upload, X, FolderSearch } from 'lucide-react';
+import { Settings, Save, Trash2, FileCode2, Upload, X, FolderSearch } from 'lucide-react';
 import { stringify } from 'yaml';
 import TemplateTree from './TemplateTree';
 
@@ -104,13 +104,9 @@ export default function TemplateManager() {
 
     const newTemplate = {
       name: safeName,
-      description: "New custom template",
-      structure: [
-        "01_SEQUENCES",
-        {
-          "02_FOOTAGE": ["A_ROLL"]
-        }
-      ]
+      description: "Custom project template",
+      parameters: ["id", "title", "date", "editor"],
+      structure: []
     };
 
     try {
@@ -118,10 +114,35 @@ export default function TemplateManager() {
       await loadTemplates();
       setSelectedTemplate(safeName);
       setNewTemplateName('');
-      setStatus(`Created template ${safeName}`);
+      setStatus(`Created blank template "${safeName}"`);
       setTimeout(() => setStatus(''), 3000);
     } catch (e: any) {
       setStatus(`Error creating: ${e.message || e}`);
+    }
+  };
+
+  const handleDeleteTemplate = async () => {
+    if (!selectedTemplate) return;
+    if (selectedTemplate === 'default') {
+      if (!window.confirm('Are you sure you want to delete the default template?')) {
+        return;
+      }
+    } else {
+      if (!window.confirm(`Are you sure you want to delete template "${selectedTemplate}"?`)) {
+        return;
+      }
+    }
+
+    try {
+      await invoke('delete_template', { name: selectedTemplate });
+      const remaining = templates.filter(t => t !== selectedTemplate);
+      setTemplates(remaining);
+      const nextSelected = remaining[0] || 'default';
+      setSelectedTemplate(nextSelected);
+      setStatus(`Deleted template "${selectedTemplate}"`);
+      setTimeout(() => setStatus(''), 3000);
+    } catch (e: any) {
+      setStatus(`Error deleting: ${e.message || e}`);
     }
   };
 
@@ -252,12 +273,22 @@ export default function TemplateManager() {
             {templates.map(t => t !== 'default' && <option key={t} value={t}>{t}</option>)}
           </select>
 
-          <button
-            onClick={handleSave}
-            className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition-colors flex items-center justify-center gap-2 mb-6"
-          >
-            <Save size={18} /> Save Template
-          </button>
+          <div className="flex gap-2 mb-6">
+            <button
+              onClick={handleSave}
+              className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-3 rounded transition-colors flex items-center justify-center gap-1.5 text-sm shadow-sm"
+              title="Save Template"
+            >
+              <Save size={16} /> Save
+            </button>
+            <button
+              onClick={handleDeleteTemplate}
+              className="bg-red-600/80 hover:bg-red-600 text-white py-2 px-3 rounded transition-colors flex items-center justify-center gap-1.5 text-sm shadow-sm"
+              title="Delete Current Template"
+            >
+              <Trash2 size={16} /> Delete
+            </button>
+          </div>
 
           <div className="border-t border-gray-700 pt-4">
             <label className="block text-sm font-medium mb-1">Create New Template</label>

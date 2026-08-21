@@ -111,6 +111,17 @@ pub fn save_template(name: String, template: Template) -> Result<(), String> {
     Ok(())
 }
 
+#[tauri::command]
+pub fn delete_template(name: String) -> Result<(), String> {
+    let safe_name = sanitize_name(&name);
+    let mut path = get_templates_dir();
+    path.push(format!("{}.yaml", safe_name));
+    if path.exists() {
+        fs::remove_file(&path).map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+
 fn scan_dir_recursive(dir: &std::path::Path) -> Result<Vec<serde_yaml::Value>, String> {
     let mut result = Vec::new();
     let entries = fs::read_dir(dir).map_err(|e| e.to_string())?;
