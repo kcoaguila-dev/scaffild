@@ -252,10 +252,10 @@ export default function ProjectBuilder({ onProjectCreated }: ProjectBuilderProps
             </select>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {templateParams.map(param => (
-              <div key={param.name}>
-                <label className="block text-sm font-medium mb-1">
+              <div key={param.name} className="min-w-0">
+                <label className="block text-sm font-medium mb-1 truncate">
                   {param.label || param.name} {param.required && <span className="text-red-400">*</span>}
                 </label>
                 <input
@@ -264,7 +264,7 @@ export default function ProjectBuilder({ onProjectCreated }: ProjectBuilderProps
                   readOnly={param.locked}
                   onChange={e => setParams({ ...params, [param.name]: e.target.value })}
                   placeholder={param.name === 'title' ? 'e.g. Nike Commercial' : ''}
-                  className={`w-full bg-gray-800 border border-gray-700 rounded p-2 focus:outline-none focus:border-blue-500 ${param.locked ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  className={`w-full bg-gray-800 border border-gray-700 rounded p-2 focus:outline-none focus:border-blue-500 text-sm ${param.locked ? 'opacity-50 cursor-not-allowed' : ''}`}
                 />
               </div>
             ))}

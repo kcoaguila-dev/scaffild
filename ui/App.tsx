@@ -79,7 +79,7 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#121212] text-gray-200 flex flex-col">
+    <div className="min-h-screen bg-[#121212] text-gray-200 flex flex-col overflow-x-hidden select-none">
       {/* Top Menu Bar (Post Haste Style) */}
       <MenuBar
         onSelectTab={setActiveTab}
