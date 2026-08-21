@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { listen, UnlistenFn } from '@tauri-apps/api/event';
-import { HardDriveDownload } from 'lucide-react';
+import { HardDriveDownload, FolderOpen } from 'lucide-react';
 
 interface ProgressEvent {
   file: string;
@@ -66,6 +66,24 @@ export default function MediaIngest() {
     }
   };
 
+  const handleBrowseSource = async () => {
+    try {
+      const selected = await invoke<string | null>('pick_directory');
+      if (selected) setSourceDir(selected);
+    } catch (err) {
+      console.error('Failed to pick source directory:', err);
+    }
+  };
+
+  const handleBrowseTarget = async () => {
+    try {
+      const selected = await invoke<string | null>('pick_directory');
+      if (selected) setTargetProjectDir(selected);
+    } catch (err) {
+      console.error('Failed to pick target directory:', err);
+    }
+  };
+
   return (
     <div className="p-6 bg-gray-900 text-white rounded-lg shadow-md max-w-2xl mx-auto mt-8">
       <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
@@ -75,24 +93,44 @@ export default function MediaIngest() {
       <div className="space-y-4">
         <div>
           <label className="block text-sm font-medium mb-1">Source Directory (SD Card / Camera)</label>
-          <input
-            type="text"
-            value={sourceDir}
-            onChange={e => setSourceDir(e.target.value)}
-            placeholder="/media/SDCARD/DCIM"
-            className="w-full bg-gray-800 border border-gray-700 rounded p-2 focus:outline-none focus:border-blue-500"
-          />
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={sourceDir}
+              onChange={e => setSourceDir(e.target.value)}
+              placeholder="e.g. D:\DCIM\100MEDIA"
+              className="flex-grow bg-gray-800 border border-gray-700 rounded p-2 focus:outline-none focus:border-blue-500 font-mono text-sm text-white"
+            />
+            <button
+              type="button"
+              onClick={handleBrowseSource}
+              className="px-3.5 py-2 bg-gray-800 hover:bg-gray-700 text-gray-200 hover:text-white border border-gray-700 rounded text-sm font-medium transition-colors flex items-center gap-1.5 shrink-0"
+            >
+              <FolderOpen size={16} className="text-amber-400" />
+              <span>Browse...</span>
+            </button>
+          </div>
         </div>
 
         <div>
           <label className="block text-sm font-medium mb-1">Target Project Directory (Root)</label>
-          <input
-            type="text"
-            value={targetProjectDir}
-            onChange={e => setTargetProjectDir(e.target.value)}
-            placeholder="/path/to/projects/0001_NewProject"
-            className="w-full bg-gray-800 border border-gray-700 rounded p-2 focus:outline-none focus:border-blue-500"
-          />
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={targetProjectDir}
+              onChange={e => setTargetProjectDir(e.target.value)}
+              placeholder="e.g. C:\Users\hippo\Videos\00_PROJECTS\0001_NewProject"
+              className="flex-grow bg-gray-800 border border-gray-700 rounded p-2 focus:outline-none focus:border-blue-500 font-mono text-sm text-white"
+            />
+            <button
+              type="button"
+              onClick={handleBrowseTarget}
+              className="px-3.5 py-2 bg-gray-800 hover:bg-gray-700 text-gray-200 hover:text-white border border-gray-700 rounded text-sm font-medium transition-colors flex items-center gap-1.5 shrink-0"
+            >
+              <FolderOpen size={16} className="text-amber-400" />
+              <span>Browse...</span>
+            </button>
+          </div>
         </div>
 
         <button

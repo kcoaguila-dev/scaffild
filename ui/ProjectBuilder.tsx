@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
-import { FolderPlus } from 'lucide-react';
+import { FolderPlus, FolderOpen } from 'lucide-react';
 
 export interface TemplateParam {
   name: string;
@@ -91,6 +91,17 @@ export default function ProjectBuilder() {
     }
   };
 
+  const handleBrowseDirectory = async () => {
+    try {
+      const selected = await invoke<string | null>('pick_directory');
+      if (selected) {
+        setTargetDir(selected);
+      }
+    } catch (err) {
+      console.error('Failed to pick directory:', err);
+    }
+  };
+
   return (
     <div className="p-6 bg-gray-900 text-white rounded-lg shadow-md max-w-2xl mx-auto mt-8">
       <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
@@ -100,13 +111,23 @@ export default function ProjectBuilder() {
       <div className="space-y-4">
         <div>
           <label className="block text-sm font-medium mb-1">Target Directory</label>
-          <input
-            type="text"
-            value={targetDir}
-            onChange={e => setTargetDir(e.target.value)}
-            placeholder="/path/to/projects/folder"
-            className="w-full bg-gray-800 border border-gray-700 rounded p-2 focus:outline-none focus:border-blue-500"
-          />
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={targetDir}
+              onChange={e => setTargetDir(e.target.value)}
+              placeholder="e.g. C:\Users\hippo\Videos\00_PROJECTS"
+              className="flex-grow bg-gray-800 border border-gray-700 rounded p-2 focus:outline-none focus:border-blue-500 font-mono text-sm text-white"
+            />
+            <button
+              type="button"
+              onClick={handleBrowseDirectory}
+              className="px-3.5 py-2 bg-gray-800 hover:bg-gray-700 text-gray-200 hover:text-white border border-gray-700 rounded text-sm font-medium transition-colors flex items-center gap-1.5 shrink-0"
+            >
+              <FolderOpen size={16} className="text-amber-400" />
+              <span>Browse...</span>
+            </button>
+          </div>
         </div>
 
         <div>

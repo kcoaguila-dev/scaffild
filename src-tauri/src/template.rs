@@ -195,3 +195,12 @@ pub fn pick_folder_and_scan() -> Result<Option<ScannedFolderResult>, String> {
     }
 }
 
+#[tauri::command]
+pub fn pick_directory() -> Result<Option<String>, String> {
+    if let Some(folder_path) = rfd::FileDialog::new().pick_folder() {
+        Ok(Some(folder_path.to_string_lossy().to_string()))
+    } else {
+        Ok(None)
+    }
+}
+

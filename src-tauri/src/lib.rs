@@ -13,6 +13,7 @@ pub fn run() {
             template::delete_template,
             template::scan_directory_structure,
             template::pick_folder_and_scan,
+            template::pick_directory,
             builder::build_project,
             ingest::ingest_media
         ])
