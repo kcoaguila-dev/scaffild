@@ -112,7 +112,7 @@ import { TemplateParam } from './ProjectBuilder';
 
 interface TemplateTreeProps {
   structure: any[];
-  parameters?: TemplateParam[];
+  parameters?: (TemplateParam | string)[];
   onChange: (newStructure: any[]) => void;
   onImportFolder?: () => void;
 }
@@ -275,7 +275,7 @@ function SortableTree({
   parentId: string;
   selectedNodeId: string | null;
   onSelectNode: (id: string) => void;
-  parameters?: TemplateParam[];
+  parameters?: (TemplateParam | string)[];
   onChange: (nodes: TreeNodeData[]) => void;
   onImportFolder?: () => void;
 }) {
@@ -329,7 +329,7 @@ function NodeItem({
   parentId: string;
   selectedNodeId: string | null;
   onSelectNode: (id: string) => void;
-  parameters?: TemplateParam[];
+  parameters?: (TemplateParam | string)[];
   onUpdate: (node: TreeNodeData) => void;
   onDelete: () => void;
   onReorder: (dragIndex: number, dropIndex: number) => void;
@@ -341,6 +341,10 @@ function NodeItem({
   const [showNodeMenu, setShowNodeMenu] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const nodeMenuRef = useRef<HTMLDivElement>(null);
+
+  const availableParams = (parameters || ['id', 'title', 'date', 'editor']).map(p =>
+    typeof p === 'string' ? { name: p, label: p } : p
+  );
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -482,12 +486,7 @@ function NodeItem({
           >
             <option value="">{`{ }`}</option>
             <option value="project">[project]</option>
-            {(parameters || [
-              { name: 'id', label: 'Project ID' },
-              { name: 'title', label: 'Title' },
-              { name: 'date', label: 'Date' },
-              { name: 'editor', label: 'Editor' }
-            ]).map(p => (
+            {availableParams.map(p => (
               <option key={p.name} value={p.name}>{p.name}</option>
             ))}
           </select>

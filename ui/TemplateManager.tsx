@@ -9,7 +9,7 @@ import { TemplateParam } from './ProjectBuilder';
 interface Template {
   name: string;
   description?: string;
-  parameters?: TemplateParam[];
+  parameters?: (TemplateParam | string)[];
   structure: any[];
 }
 
@@ -168,6 +168,36 @@ export default function TemplateManager() {
     }
   };
 
+  const handleImportFolderStructure = async () => {
+    try {
+      const res = await invoke<{ name: string; path: string; structure: any[] } | null>('pick_folder_and_scan');
+      if (!res) return;
+
+      const targetName = selectedTemplate || res.name.replace(/[^a-zA-Z0-9_-]/g, '_');
+      const baseTemplate = templateData || {
+        name: targetName,
+        description: `Imported from ${res.path}`,
+        parameters: ['id', 'title', 'date', 'editor'],
+        structure: [],
+      };
+      const updated = { ...baseTemplate, structure: res.structure };
+      setTemplateData(updated);
+      setYamlText(stringify(updated));
+      if (!selectedTemplate) {
+        setSelectedTemplate(targetName);
+        if (!templates.includes(targetName)) {
+          setTemplates([...templates, targetName]);
+        }
+      }
+      setIsImportModalOpen(false);
+      setStatus(`Imported all folders and files from ${res.name}`);
+      setTimeout(() => setStatus(''), 4000);
+    } catch (err) {
+      console.warn('Native folder picker fallback to modal:', err);
+      setIsImportModalOpen(true);
+    }
+  };
+
   const handleScanPath = async (pathToScan: string) => {
     if (!pathToScan.trim()) {
       setStatus('Please provide a valid folder path.');
@@ -181,6 +211,7 @@ export default function TemplateManager() {
       const baseTemplate = templateData || {
         name: selectedTemplate || 'imported_template',
         description: 'Imported from folder',
+        parameters: ['id', 'title', 'date', 'editor'],
         structure: [],
       };
       const updated = { ...baseTemplate, structure: scannedStructure };
@@ -257,6 +288,7 @@ export default function TemplateManager() {
     const baseTemplate = templateData || {
       name: targetName,
       description: `Imported from ${detectedRootName || 'folder'}`,
+      parameters: ['id', 'title', 'date', 'editor'],
       structure: [],
     };
     const updated = { ...baseTemplate, structure: converted };
@@ -283,7 +315,7 @@ export default function TemplateManager() {
 
         <div className="flex items-center gap-2">
           <button
-            onClick={() => setIsImportModalOpen(true)}
+            onClick={handleImportFolderStructure}
             className="flex items-center gap-1.5 bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded text-xs font-medium transition-colors shadow-sm"
           >
             <Upload size={14} /> Import Folder Structure...

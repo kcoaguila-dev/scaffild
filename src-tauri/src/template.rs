@@ -168,3 +168,30 @@ pub fn scan_directory_structure(path: String) -> Result<Vec<serde_yaml::Value>, 
     scan_dir_recursive(&root)
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ScannedFolderResult {
+    pub name: String,
+    pub path: String,
+    pub structure: Vec<serde_yaml::Value>,
+}
+
+#[tauri::command]
+pub fn pick_folder_and_scan() -> Result<Option<ScannedFolderResult>, String> {
+    if let Some(folder_path) = rfd::FileDialog::new().pick_folder() {
+        let path_str = folder_path.to_string_lossy().to_string();
+        let name = folder_path
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or("imported_template")
+            .to_string();
+        let structure = scan_dir_recursive(&folder_path)?;
+        Ok(Some(ScannedFolderResult {
+            name,
+            path: path_str,
+            structure,
+        }))
+    } else {
+        Ok(None)
+    }
+}
+
