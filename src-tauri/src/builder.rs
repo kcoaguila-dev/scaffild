@@ -304,10 +304,22 @@ const SYNC_BINS_SCRIPT: &str = r#"// SyncBins.jsx
         }
     }
 
+    function organizeSequences() {
+        var seqBin = getOrCreateBin("00_SEQUENCES", null);
+        var rootChildren = app.project.rootItem.children;
+        for (var i = rootChildren.numItems - 1; i >= 0; i--) {
+            var item = rootChildren[i];
+            if (item.type === ProjectItemType.CLIP && item.isSequence && item.isSequence()) {
+                item.moveBin(seqBin);
+            }
+        }
+    }
+
     app.enableQE();
     syncDirectoryAndMedia(rootFolder, null);
+    organizeSequences();
 
-    alert("Sync complete.\n\n" + logMsg);
+    alert("Scaffild Sync Complete!\n\n" + logMsg);
 })();
 "#;
 

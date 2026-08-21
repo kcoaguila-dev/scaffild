@@ -1,7 +1,7 @@
-// SyncBins.jsx
+﻿// SyncBins.jsx
 // Premiere Pro ExtendScript Companion for Scaffild
-// Dynamically mirrors ANY disk folder hierarchy into Premiere project bins
-// and automatically imports media files into their respective matching bins.
+// Dynamically mirrors ANY disk folder hierarchy into Premiere project bins,
+// organizes timelines into 00_SEQUENCES, and auto-imports all media into matching bins.
 
 (function () {
     var logMsg = "";
@@ -76,8 +76,20 @@
         }
     }
 
+    function organizeSequences() {
+        var seqBin = getOrCreateBin("00_SEQUENCES", null);
+        var rootChildren = app.project.rootItem.children;
+        for (var i = rootChildren.numItems - 1; i >= 0; i--) {
+            var item = rootChildren[i];
+            if (item.type === ProjectItemType.CLIP && item.isSequence && item.isSequence()) {
+                item.moveBin(seqBin);
+            }
+        }
+    }
+
     app.enableQE();
     syncDirectoryAndMedia(rootFolder, null);
+    organizeSequences();
 
-    alert("Sync complete.\n\n" + logMsg);
+    alert("Scaffild Sync Complete!\n\n" + logMsg);
 })();
