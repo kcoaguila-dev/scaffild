@@ -432,6 +432,7 @@ export default function TemplateManager() {
               </div>
             ) : !showYamlEditor ? (
               <TemplateTree
+                key={selectedTemplate}
                 structure={templateData?.structure || []}
                 parameters={templateData?.parameters}
                 onChange={handleTreeChange}

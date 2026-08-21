@@ -139,10 +139,7 @@ export default function TemplateTree({ structure, parameters, onChange, onImport
       setIsInternalUpdate(false);
       return;
     }
-    const currentRaw = toRawStructure(nodes);
-    if (JSON.stringify(currentRaw) !== JSON.stringify(structure)) {
-      setNodes(fromRawStructure(structure || []));
-    }
+    setNodes(fromRawStructure(structure || []));
   }, [structure]);
 
   useEffect(() => {
