@@ -1,4 +1,4 @@
-﻿# Scaffild 🎬⚡
+# Scaffild 🎬⚡
 
 [![CI Test Suite](https://github.com/kcoaguila-dev/scaffild/actions/workflows/test.yml/badge.svg)](https://github.com/kcoaguila-dev/scaffild/actions/workflows/test.yml)
 [![Release](https://img.shields.io/badge/Release-v0.1.0-blue.svg)](https://github.com/kcoaguila-dev/scaffild/releases)
@@ -28,43 +28,49 @@ Ready-to-install release binaries are packaged in `dist-installers/` and availab
 ## 🏗️ System Architecture
 
 ```mermaid
-flowchart TD
-    subgraph CLIENTS["🤖 Users & AI Agents"]
-        U["Video Editors & DITs (GUI)"]
-        AI["Claude Desktop / Cursor / Antigravity (MCP)"]
-        CLI["Terminal & CI/CD (scaffild CLI)"]
+graph TD
+    classDef client fill:#1e293b,stroke:#3b82f6,stroke-width:2px,color:#fff;
+    classDef core fill:#0f172a,stroke:#8b5cf6,stroke-width:2px,color:#fff;
+    classDef engine fill:#1e1b4b,stroke:#a855f7,stroke-width:1px,color:#e9d5ff;
+    classDef output fill:#134e4a,stroke:#14b8a6,stroke-width:1px,color:#ccfbf1;
+
+    subgraph INGRESS["1. Ingress Layer (Interfaces)"]
+        UI["🖥️ Desktop GUI (React 19 + TypeScript)"]:::client
+        AI["🤖 AI Agents (Claude Desktop / Cursor MCP)"]:::client
+        CLI["💻 Headless CLI (scaffild CLI)"]:::client
     end
 
-    subgraph ENGINE["⚡ Scaffild Core (Rust + Tauri v2)"]
-        ROUTER{"Command Router"}
-        MCP_SERVER["Model Context Protocol Server (JSON-RPC stdio)"]
-        BUILDER["Project Scaffolding Engine"]
-        INGEST["Multi-Threaded xxHash64 Ingest Engine"]
-        TEMPLATES["YAML Template Manager & Asset Cloner"]
+    subgraph CORE["2. Engine Core (Rust + Tauri v2)"]
+        ROUTER["⚡ Command & Protocol Router"]:::core
+        MCP["🤖 MCP Server (JSON-RPC stdio)"]:::engine
+        SCAFFOLD["📁 Template & Asset Builder"]:::engine
+        DIT["⚡ Dual xxHash64 Ingest Engine"]:::engine
     end
 
-    subgraph OUTPUTS["📁 File System & Adobe Integration"]
-        DISK["Project Folders (NVMe / NAS)"]
-        PRIMARY["Primary Footage (02_FOOTAGE/A_ROLL)"]
-        BACKUP["Secondary 3-2-1 Backup (Archive HDD)"]
-        PREMIERE["Adobe Premiere Pro (SyncBins.jsx & Sequences)"]
-        PHOTOSHOP["Adobe Photoshop (Master .psd Covers)"]
+    subgraph EGRESS["3. Outputs & Ecosystem"]
+        FILES["📁 Structured Project Directories & Cloned Masters"]:::output
+        STORAGE["💾 3-2-1 Dual Checksum Backup (SSD + HDD)"]:::output
+        PREMIERE["🎬 Adobe Premiere Pro (SyncBins.jsx & Sequences)"]:::output
     end
 
-    U --> ROUTER
-    AI -->|scaffild mcp| MCP_SERVER
-    CLI -->|scaffild build/ingest| ROUTER
-    ROUTER --> BUILDER
-    ROUTER --> INGEST
-    MCP_SERVER --> BUILDER
-    MCP_SERVER --> INGEST
-    BUILDER --> TEMPLATES
-    BUILDER --> DISK
-    BUILDER --> PREMIERE
-    BUILDER --> PHOTOSHOP
-    INGEST --> PRIMARY
-    INGEST --> BACKUP
+    UI --> ROUTER
+    AI --> MCP
+    CLI --> ROUTER
+    MCP --> ROUTER
+
+    ROUTER --> SCAFFOLD
+    ROUTER --> DIT
+
+    SCAFFOLD --> FILES
+    SCAFFOLD --> PREMIERE
+    DIT --> STORAGE
 ```
+
+| Layer | Technologies | Responsibilities |
+| :--- | :--- | :--- |
+| **Presentation / Ingress** | React 19, Tailwind CSS, Lucide, JSON-RPC 2.0 | User interactions, template tree designer, AI Agent stdio protocol |
+| **Core Systems (Rust)** | Tauri v2, Rayon, `twox-hash`, Serde, WalkDir | Multi-threaded file I/O, `xxHash64` hardware verification, asset cloning |
+| **Integrations & Output** | Adobe ExtendScript (JSX), Premiere Pro XML | Dynamic bin generation, GZIP sequence presets, Photoshop master covers |
 
 ---
 
