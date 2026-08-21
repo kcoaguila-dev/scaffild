@@ -31,7 +31,7 @@ export default function AboutModal({ isOpen, onClose }: AboutModalProps) {
         </div>
 
         <p className="text-xs text-gray-300 leading-relaxed">
-          High-performance desktop post-production project scaffolding, genuine Adobe project asset cloning, and checksum-verified media offloader.
+          The high-speed project launchpad and verified media offloader for video editors and creative studios.
         </p>
 
         <div className="pt-2 border-t border-gray-800 text-[11px] text-gray-500">

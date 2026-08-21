@@ -13,9 +13,9 @@
 [![Rust](https://img.shields.io/badge/Backend-Rust%20%28Tauri%20v2%29-orange.svg)]()
 [![React](https://img.shields.io/badge/Frontend-React%2019%20%2B%20TypeScript-61dafb.svg)]()
 
-**Scaffild** is a modern, high-performance desktop post-production project scaffolding, DIT media offloading, and AI-native automation suite built with **Tauri v2**, **Rust**, **React 19**, and **TypeScript**.
+**Scaffild** is the high-speed project launchpad for video editors, DITs, and creative studios.
 
-Combining the capabilities of **Post Haste**, **ShotPut Pro ($149)**, and **Model Context Protocol (MCP)**, Scaffild automates folder hierarchy creation, genuine Adobe Premiere Pro (`.prproj`) & Photoshop (`.psd`) master asset cloning, dual-destination `xxHash64` media backup, and dynamic Premiere bin synchronization.
+Instantly scaffold standardized project folders, clone pre-configured Premiere Pro (`.prproj`) and Photoshop (`.psd`) master templates, offload camera media with verified dual backups, and automate your entire workflow with AI.
 
 ---
 
