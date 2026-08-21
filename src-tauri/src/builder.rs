@@ -15,32 +15,86 @@ pub struct ProjectParams {
     pub custom: HashMap<String, String>,
 }
 
-fn replace_tokens(text: &str, params: &ProjectParams) -> String {
+fn sanitize_filename(name: &str) -> String {
+    let s = name
+        .trim()
+        .replace(" ", "_")
+        .replace("/", "_")
+        .replace("\\", "_")
+        .replace("..", "_")
+        .replace(":", "_")
+        .replace("*", "_")
+        .replace("?", "_")
+        .replace("\"", "_")
+        .replace("<", "_")
+        .replace(">", "_")
+        .replace("|", "_");
+
+    let mut clean = String::new();
+    let mut last_underscore = false;
+    for c in s.chars() {
+        if c == '_' {
+            if !last_underscore {
+                clean.push('_');
+                last_underscore = true;
+            }
+        } else {
+            clean.push(c);
+            last_underscore = false;
+        }
+    }
+    clean.trim_matches('_').to_string()
+}
+
+fn get_project_composite(params: &ProjectParams, template: &crate::template::Template) -> String {
+    let mut parts: Vec<String> = Vec::new();
+
+    let param_order = template.get_parameters();
+    for p in param_order {
+        if let Some(val) = params.params.get(&p.name) {
+            let clean = sanitize_filename(val);
+            if !clean.is_empty() {
+                parts.push(clean);
+            }
+        }
+    }
+
+    if parts.is_empty() {
+        for key in ["id", "title", "date", "editor"] {
+            if let Some(val) = params.params.get(key) {
+                let clean = sanitize_filename(val);
+                if !clean.is_empty() {
+                    parts.push(clean);
+                }
+            }
+        }
+    }
+
+    if parts.is_empty() {
+        "Project".to_string()
+    } else {
+        parts.join("_")
+    }
+}
+
+fn replace_tokens(text: &str, project_composite: &str, params: &ProjectParams) -> String {
     let mut result = text.to_string();
 
-    let id_val = params.params.get("id").map(|s| s.as_str()).unwrap_or("");
-    let title_val = params.params.get("title").map(|s| s.as_str()).unwrap_or("");
-    let project_composite = if !id_val.is_empty() && !title_val.is_empty() {
-        format!("{}_{}", id_val, title_val)
-    } else if !title_val.is_empty() {
-        title_val.to_string()
-    } else {
-        id_val.to_string()
-    };
-
-    result = result.replace("[project]", &project_composite);
-    result = result.replace("{{project}}", &project_composite);
-    result = result.replace("_PROJECT_TEMPLATE", &project_composite);
-    result = result.replace("PROJECT_TEMPLATE", &project_composite);
+    result = result.replace("[project]", project_composite);
+    result = result.replace("{{project}}", project_composite);
+    result = result.replace("_PROJECT_TEMPLATE", project_composite);
+    result = result.replace("PROJECT_TEMPLATE", project_composite);
 
     for (key, val) in &params.params {
+        let clean_val = sanitize_filename(val);
         let token = format!("{{{{{}}}}}", key);
-        result = result.replace(&token, val);
+        result = result.replace(&token, &clean_val);
     }
 
     for (key, val) in &params.custom {
+        let clean_val = sanitize_filename(val);
         let token = format!("{{{{{}}}}}", key);
-        result = result.replace(&token, val);
+        result = result.replace(&token, &clean_val);
     }
 
     result
@@ -138,11 +192,12 @@ fn build_structure(
     node: &serde_yaml::Value,
     template_name: &str,
     rel_dir: &Path,
+    project_composite: &str,
     params: &ProjectParams,
 ) -> Result<(), String> {
     match node {
         serde_yaml::Value::String(name) => {
-            let replaced = replace_tokens(name, params);
+            let replaced = replace_tokens(name, project_composite, params);
             let p = base_path.join(&replaced);
             if is_file_path(&replaced) {
                 create_template_file(&p, &replaced, template_name, rel_dir, params)?;
@@ -153,14 +208,14 @@ fn build_structure(
         serde_yaml::Value::Mapping(map) => {
             for (key, val) in map {
                 if let serde_yaml::Value::String(dir_name) = key {
-                    let replaced = replace_tokens(dir_name, params);
+                    let replaced = replace_tokens(dir_name, project_composite, params);
                     let p = base_path.join(&replaced);
                     let next_rel = rel_dir.join(dir_name);
                     fs::create_dir_all(&p).map_err(|e| format!("Failed to create dir {}: {}", p.display(), e))?;
 
                     if let serde_yaml::Value::Sequence(seq) = val {
                         for sub_node in seq {
-                            build_structure(&p, sub_node, template_name, &next_rel, params)?;
+                            build_structure(&p, sub_node, template_name, &next_rel, project_composite, params)?;
                         }
                     }
                 }
@@ -169,19 +224,6 @@ fn build_structure(
         _ => {}
     }
     Ok(())
-}
-
-fn sanitize_filename(name: &str) -> String {
-    name.replace("/", "_")
-        .replace("\\", "_")
-        .replace("..", "_")
-        .replace(":", "_")
-        .replace("*", "_")
-        .replace("?", "_")
-        .replace("\"", "_")
-        .replace("<", "_")
-        .replace(">", "_")
-        .replace("|", "_")
 }
 
 #[tauri::command]
@@ -195,13 +237,7 @@ pub fn build_project(
     let template = load_template(template_name.clone())?;
     let base_path = PathBuf::from(&target_dir);
 
-    let id_val = params.params.get("id").map(|s| s.as_str()).unwrap_or("Project");
-    let title_val = params.params.get("title").map(|s| s.as_str()).unwrap_or("Untitled");
-
-    let safe_id = sanitize_filename(id_val);
-    let safe_title = sanitize_filename(title_val);
-
-    let root_folder_name = format!("{}_{}", safe_id, safe_title);
+    let root_folder_name = get_project_composite(&params, &template);
     let project_root = base_path.join(&root_folder_name);
 
     if project_root.exists() {
@@ -211,7 +247,7 @@ pub fn build_project(
 
     let root_rel = PathBuf::new();
     for node in &template.structure {
-        build_structure(&project_root, node, &template_name, &root_rel, &params)?;
+        build_structure(&project_root, node, &template_name, &root_rel, &root_folder_name, &params)?;
     }
 
     let should_open = open_project.unwrap_or(true);
