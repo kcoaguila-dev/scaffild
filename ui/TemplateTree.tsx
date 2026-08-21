@@ -129,6 +129,7 @@ const PRESET_ITEMS = [
 
 export default function TemplateTree({ structure, parameters, onChange, onImportFolder }: TemplateTreeProps) {
   const [nodes, setNodes] = useState<TreeNodeData[]>([]);
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [isInternalUpdate, setIsInternalUpdate] = useState(false);
   const [showAddMenu, setShowAddMenu] = useState(false);
   const addMenuRef = useRef<HTMLDivElement>(null);
@@ -165,6 +166,22 @@ export default function TemplateTree({ structure, parameters, onChange, onImport
     setShowAddMenu(false);
   };
 
+  const deleteNodeById = (nodeList: TreeNodeData[], targetId: string): TreeNodeData[] => {
+    return nodeList
+      .filter(n => n.id !== targetId)
+      .map(n => ({
+        ...n,
+        children: deleteNodeById(n.children, targetId)
+      }));
+  };
+
+  const handleRemoveSelected = () => {
+    if (!selectedNodeId) return;
+    const updated = deleteNodeById(nodes, selectedNodeId);
+    setSelectedNodeId(null);
+    triggerChange(updated);
+  };
+
   return (
     <div className="bg-gray-800 rounded p-4 border border-gray-700 flex flex-col h-full">
       <div className="flex-grow overflow-y-auto min-h-[300px] max-h-[500px]">
@@ -176,6 +193,8 @@ export default function TemplateTree({ structure, parameters, onChange, onImport
           <SortableTree
             nodes={nodes}
             parentId="root"
+            selectedNodeId={selectedNodeId}
+            onSelectNode={setSelectedNodeId}
             parameters={parameters}
             onChange={triggerChange}
             onImportFolder={onImportFolder}
@@ -183,13 +202,14 @@ export default function TemplateTree({ structure, parameters, onChange, onImport
         )}
       </div>
 
-      <div className="flex items-center gap-3 pt-3 border-t border-gray-700 mt-2 relative">
+      {/* Post Haste Style Bottom Bar: Add & Remove */}
+      <div className="flex items-center gap-2 pt-3 border-t border-gray-700 mt-2 relative">
         <div className="relative" ref={addMenuRef}>
           <button
             onClick={() => setShowAddMenu(!showAddMenu)}
-            className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded text-sm text-white font-medium transition-colors shadow-sm"
+            className="flex items-center gap-1.5 bg-gray-700 hover:bg-gray-600 px-3 py-1.5 rounded text-xs text-white font-semibold transition-colors border border-gray-600 shadow-sm"
           >
-            <Plus size={16} /> Add <ChevronDown size={14} />
+            <Plus size={14} /> Add <ChevronDown size={12} />
           </button>
 
           {showAddMenu && (
@@ -226,14 +246,17 @@ export default function TemplateTree({ structure, parameters, onChange, onImport
           )}
         </div>
 
-        {onImportFolder && (
-          <button
-            onClick={onImportFolder}
-            className="flex items-center gap-1.5 bg-gray-700 hover:bg-gray-600 px-3 py-1.5 rounded text-sm text-gray-200 font-medium transition-colors border border-gray-600"
-          >
-            <Upload size={14} /> Import Folder Structure
-          </button>
-        )}
+        <button
+          onClick={handleRemoveSelected}
+          disabled={!selectedNodeId}
+          className={`px-3 py-1.5 rounded text-xs font-semibold transition-colors border flex items-center gap-1 ${
+            selectedNodeId
+              ? 'bg-gray-700 hover:bg-red-700 text-gray-200 hover:text-white border-gray-600 hover:border-red-600'
+              : 'bg-gray-800 text-gray-500 border-gray-700 cursor-not-allowed'
+          }`}
+        >
+          <Trash2 size={13} /> Remove
+        </button>
       </div>
     </div>
   );
@@ -242,12 +265,16 @@ export default function TemplateTree({ structure, parameters, onChange, onImport
 function SortableTree({
   nodes,
   parentId,
+  selectedNodeId,
+  onSelectNode,
   parameters,
   onChange,
   onImportFolder
 }: {
   nodes: TreeNodeData[];
   parentId: string;
+  selectedNodeId: string | null;
+  onSelectNode: (id: string) => void;
   parameters?: TemplateParam[];
   onChange: (nodes: TreeNodeData[]) => void;
   onImportFolder?: () => void;
@@ -260,6 +287,8 @@ function SortableTree({
           node={node}
           index={index}
           parentId={parentId}
+          selectedNodeId={selectedNodeId}
+          onSelectNode={onSelectNode}
           parameters={parameters}
           onUpdate={(updatedNode) => {
             const newNodes = [...nodes];
@@ -287,15 +316,19 @@ function NodeItem({
   node,
   index,
   parentId,
+  selectedNodeId,
+  onSelectNode,
   parameters,
   onUpdate,
   onDelete,
   onReorder,
-  onImportFolder
+  onImportFolder,
 }: {
   node: TreeNodeData;
   index: number;
   parentId: string;
+  selectedNodeId: string | null;
+  onSelectNode: (id: string) => void;
   parameters?: TemplateParam[];
   onUpdate: (node: TreeNodeData) => void;
   onDelete: () => void;
@@ -303,6 +336,7 @@ function NodeItem({
   onImportFolder?: () => void;
 }) {
   const isFolder = !isFileItem(node.name) || node.children.length > 0;
+  const isSelected = selectedNodeId === node.id;
   const [expanded, setExpanded] = useState(true);
   const [showNodeMenu, setShowNodeMenu] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -388,7 +422,12 @@ function NodeItem({
   return (
     <div className="flex flex-col ml-4">
       <div
-        className="flex items-center gap-2 group py-1 hover:bg-gray-700/50 rounded pr-2 border border-transparent hover:border-gray-600 transition-colors relative"
+        onClick={() => onSelectNode(node.id)}
+        className={`flex items-center gap-2 group py-1 rounded pr-2 border transition-colors relative cursor-pointer ${
+          isSelected
+            ? 'bg-blue-600/20 border-blue-500/60 text-white'
+            : 'border-transparent hover:bg-gray-700/50 hover:border-gray-600'
+        }`}
         onDragOver={handleDragOver}
         onDrop={handleDrop}
       >
@@ -402,7 +441,10 @@ function NodeItem({
 
         {isFolder ? (
           <button
-            onClick={() => setExpanded(!expanded)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setExpanded(!expanded);
+            }}
             className="text-gray-400 hover:text-white p-0.5"
           >
             <ItemIcon name={node.name} isFolder={true} expanded={expanded} />
@@ -417,13 +459,17 @@ function NodeItem({
           ref={inputRef}
           value={node.name}
           onChange={handleNameChange}
+          onClick={(e) => e.stopPropagation()}
           placeholder="Folder or File Name"
           className={`bg-transparent border-b border-transparent hover:border-gray-600 focus:border-blue-500 focus:outline-none px-1 text-sm flex-grow min-w-[150px] font-medium ${
             !isFolder ? 'text-blue-100 font-mono text-xs' : 'text-gray-100'
           }`}
         />
 
-        <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1 transition-opacity relative">
+        <div
+          className="opacity-0 group-hover:opacity-100 flex items-center gap-1 transition-opacity relative"
+          onClick={(e) => e.stopPropagation()}
+        >
           <select
             onChange={(e) => {
               if (e.target.value) {
@@ -491,6 +537,8 @@ function NodeItem({
           <SortableTree
             nodes={node.children}
             parentId={node.id}
+            selectedNodeId={selectedNodeId}
+            onSelectNode={onSelectNode}
             parameters={parameters}
             onChange={(newChildren) => onUpdate({ ...node, children: newChildren })}
             onImportFolder={onImportFolder}
