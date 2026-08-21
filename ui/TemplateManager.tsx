@@ -135,11 +135,14 @@ export default function TemplateManager() {
 
     try {
       const scannedStructure = await invoke<any[]>('scan_directory_structure', { path: pathToScan.trim() });
-      if (templateData) {
-        const updated = { ...templateData, structure: scannedStructure };
-        setTemplateData(updated);
-        setYamlText(stringify(updated));
-      }
+      const baseTemplate = templateData || {
+        name: selectedTemplate || 'imported_template',
+        description: 'Imported from folder',
+        structure: [],
+      };
+      const updated = { ...baseTemplate, structure: scannedStructure };
+      setTemplateData(updated);
+      setYamlText(stringify(updated));
       setStatus(`Imported folder structure from ${pathToScan}`);
       setIsImportModalOpen(false);
       setImportPath('');
@@ -154,6 +157,15 @@ export default function TemplateManager() {
   const handleNativeFolderSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
+
+    let detectedRootName = '';
+    if (files[0]) {
+      const rel = files[0].webkitRelativePath || files[0].name;
+      const p = rel.split('/');
+      if (p.length > 1) {
+        detectedRootName = p[0];
+      }
+    }
 
     // Convert webkitRelativePath into tree structure for browser fallback
     const rootMap: { [key: string]: any } = {};
@@ -200,14 +212,17 @@ export default function TemplateManager() {
     }
 
     const converted = mapToYamlStructure(rootMap);
-    if (converted.length > 0 && templateData) {
-      const updated = { ...templateData, structure: converted };
-      setTemplateData(updated);
-      setYamlText(stringify(updated));
-      setStatus('Imported folder structure from selected folder.');
-      setIsImportModalOpen(false);
-      setTimeout(() => setStatus(''), 4000);
-    }
+    const baseTemplate = templateData || {
+      name: selectedTemplate || (detectedRootName ? detectedRootName.replace(/[^a-zA-Z0-9_-]/g, '_') : 'imported_template'),
+      description: `Imported from ${detectedRootName || 'folder'}`,
+      structure: [],
+    };
+    const updated = { ...baseTemplate, structure: converted };
+    setTemplateData(updated);
+    setYamlText(stringify(updated));
+    setStatus(`Imported folder structure (${files.length} items from ${detectedRootName || 'selected folder'})`);
+    setIsImportModalOpen(false);
+    setTimeout(() => setStatus(''), 4000);
   };
 
   return (

@@ -25,12 +25,18 @@ export default function ProjectBuilder() {
   useEffect(() => {
     invoke<any>('load_template', { name: selectedTemplate })
       .then(data => {
-        const p: TemplateParam[] = data.parameters || [
+        const rawParams = data.parameters || [
           { name: 'id', label: 'Project ID', required: true },
           { name: 'title', label: 'Title', required: true },
           { name: 'date', label: 'Date' },
           { name: 'editor', label: 'Editor' },
         ];
+        const p: TemplateParam[] = rawParams.map((item: any) => {
+          if (typeof item === 'string') {
+            return { name: item, label: item.toUpperCase() };
+          }
+          return item;
+        });
         setTemplateParams(p);
 
         // Initialize state with default values where applicable

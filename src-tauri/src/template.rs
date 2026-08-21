@@ -12,17 +12,40 @@ pub struct TemplateParam {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(untagged)]
+pub enum TemplateParamEntry {
+    Detailed(TemplateParam),
+    Simple(String),
+}
+
+impl TemplateParamEntry {
+    pub fn into_param(self) -> TemplateParam {
+        match self {
+            TemplateParamEntry::Detailed(p) => p,
+            TemplateParamEntry::Simple(s) => TemplateParam {
+                name: s.clone(),
+                label: Some(s),
+                required: None,
+                locked: None,
+                default: None,
+            },
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Template {
     pub name: String,
     pub description: Option<String>,
-    pub parameters: Option<Vec<TemplateParam>>,
+    #[serde(default)]
+    pub parameters: Option<Vec<TemplateParamEntry>>,
     pub structure: Vec<serde_yaml::Value>,
 }
 
 impl Template {
     pub fn get_parameters(&self) -> Vec<TemplateParam> {
         if let Some(params) = &self.parameters {
-            params.clone()
+            params.iter().cloned().map(|e| e.into_param()).collect()
         } else {
             vec![
                 TemplateParam { name: "id".to_string(), label: Some("Project ID".to_string()), required: Some(true), locked: None, default: None },
