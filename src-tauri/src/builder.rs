@@ -189,6 +189,8 @@ pub fn build_project(
     target_dir: String,
     template_name: String,
     params: ProjectParams,
+    open_project: Option<bool>,
+    reveal_in_explorer: Option<bool>,
 ) -> Result<String, String> {
     let template = load_template(template_name.clone())?;
     let base_path = PathBuf::from(&target_dir);
@@ -212,16 +214,25 @@ pub fn build_project(
         build_structure(&project_root, node, &template_name, &root_rel, &params)?;
     }
 
-    // Automatically open the primary Premiere Pro project if one exists in the structure
-    for entry in walkdir::WalkDir::new(&project_root).into_iter().filter_map(|e| e.ok()) {
-        if entry.file_type().is_file() {
-            if let Some(ext) = entry.path().extension().and_then(|e| e.to_str()) {
-                if ext.eq_ignore_ascii_case("prproj") {
-                    let _ = open::that(entry.path());
-                    break;
+    let should_open = open_project.unwrap_or(true);
+    let should_reveal = reveal_in_explorer.unwrap_or(false);
+
+    if should_open {
+        // Automatically open the primary project file (prproj, aep, psd, etc.)
+        for entry in walkdir::WalkDir::new(&project_root).into_iter().filter_map(|e| e.ok()) {
+            if entry.file_type().is_file() {
+                if let Some(ext) = entry.path().extension().and_then(|e| e.to_str()) {
+                    if ext.eq_ignore_ascii_case("prproj") || ext.eq_ignore_ascii_case("aep") {
+                        let _ = open::that(entry.path());
+                        break;
+                    }
                 }
             }
         }
+    }
+
+    if should_reveal {
+        let _ = open::that(&project_root);
     }
 
     Ok(project_root.to_string_lossy().to_string())

@@ -16,6 +16,8 @@ export default function ProjectBuilder() {
   const [templateParams, setTemplateParams] = useState<TemplateParam[]>([]);
   const [targetDir, setTargetDir] = useState('');
   const [params, setParams] = useState<Record<string, string>>({});
+  const [openProjectAfterCreate, setOpenProjectAfterCreate] = useState(true);
+  const [revealInExplorer, setRevealInExplorer] = useState(false);
   const [status, setStatus] = useState('');
 
   useEffect(() => {
@@ -84,6 +86,8 @@ export default function ProjectBuilder() {
         targetDir,
         templateName: selectedTemplate,
         params,
+        openProject: openProjectAfterCreate,
+        revealInExplorer,
       });
       setStatus(`Success! Project created at ${res}`);
     } catch (e: any) {
@@ -162,9 +166,32 @@ export default function ProjectBuilder() {
           ))}
         </div>
 
+        {/* Options */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 pt-2 pb-1 text-xs text-gray-300 border-t border-gray-800/80">
+          <label className="flex items-center gap-2 cursor-pointer select-none hover:text-white transition-colors">
+            <input
+              type="checkbox"
+              checked={openProjectAfterCreate}
+              onChange={e => setOpenProjectAfterCreate(e.target.checked)}
+              className="rounded bg-gray-800 border-gray-700 text-blue-500 focus:ring-0 focus:ring-offset-0 cursor-pointer"
+            />
+            <span>Open project in Premiere Pro / After Effects after creation</span>
+          </label>
+
+          <label className="flex items-center gap-2 cursor-pointer select-none hover:text-white transition-colors">
+            <input
+              type="checkbox"
+              checked={revealInExplorer}
+              onChange={e => setRevealInExplorer(e.target.checked)}
+              className="rounded bg-gray-800 border-gray-700 text-blue-500 focus:ring-0 focus:ring-offset-0 cursor-pointer"
+            />
+            <span>Show folder in File Explorer</span>
+          </label>
+        </div>
+
         <button
           onClick={handleBuild}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition-colors"
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition-colors shadow-sm"
         >
           Build Project
         </button>
