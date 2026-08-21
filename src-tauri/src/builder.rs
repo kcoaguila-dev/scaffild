@@ -273,3 +273,40 @@ pub fn build_project(
 
     Ok(project_root.to_string_lossy().to_string())
 }
+
+#[tauri::command]
+pub fn get_next_project_id(target_dir: String) -> String {
+    let path = PathBuf::from(&target_dir);
+    if !path.exists() || !path.is_dir() {
+        return "0001".to_string();
+    }
+
+    let mut max_id: u64 = 0;
+    let mut num_digits: usize = 4;
+    let mut found = false;
+
+    if let Ok(entries) = fs::read_dir(path) {
+        for entry in entries.flatten() {
+            if entry.path().is_dir() {
+                let name = entry.file_name().to_string_lossy().to_string();
+                let leading_digits: String = name.chars().take_while(|c| c.is_ascii_digit()).collect();
+                if !leading_digits.is_empty() {
+                    if let Ok(num) = leading_digits.parse::<u64>() {
+                        found = true;
+                        if num > max_id {
+                            max_id = num;
+                            num_digits = leading_digits.len().max(num_digits);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if found {
+        let next_id = max_id + 1;
+        format!("{:0width$}", next_id, width = num_digits)
+    } else {
+        "0001".to_string()
+    }
+}

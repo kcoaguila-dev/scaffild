@@ -14,11 +14,25 @@ export default function ProjectBuilder() {
   const [templates, setTemplates] = useState<string[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState('');
   const [templateParams, setTemplateParams] = useState<TemplateParam[]>([]);
-  const [targetDir, setTargetDir] = useState('');
+  const [targetDir, setTargetDir] = useState(() => {
+    return localStorage.getItem('slate_target_dir') || 'C:\\Users\\hippo\\Videos\\00_PROJECTS';
+  });
   const [params, setParams] = useState<Record<string, string>>({});
   const [openProjectAfterCreate, setOpenProjectAfterCreate] = useState(true);
   const [revealInExplorer, setRevealInExplorer] = useState(false);
   const [status, setStatus] = useState('');
+
+  const updateNextId = async (dir: string) => {
+    if (!dir) return;
+    try {
+      const nextId = await invoke<string>('get_next_project_id', { targetDir: dir });
+      if (nextId) {
+        setParams(prev => ({ ...prev, id: nextId }));
+      }
+    } catch (e) {
+      console.warn('Failed to fetch next project id:', e);
+    }
+  };
 
   useEffect(() => {
     invoke<string[]>('list_templates').then(t => {
@@ -28,6 +42,13 @@ export default function ProjectBuilder() {
       }
     }).catch(console.error);
   }, []);
+
+  useEffect(() => {
+    if (targetDir) {
+      localStorage.setItem('slate_target_dir', targetDir);
+      updateNextId(targetDir);
+    }
+  }, [targetDir]);
 
   useEffect(() => {
     if (!selectedTemplate) {
@@ -57,11 +78,15 @@ export default function ProjectBuilder() {
           let def = param.default || '';
           if (param.name === 'date' && !def) def = new Date().toISOString().split('T')[0];
           if (param.name === 'id' && !def) def = '0001';
-          if (param.name === 'title' && !def) def = 'New Project';
-          if (param.name === 'editor' && !def) def = 'Jules';
+          if (param.name === 'title' && !def) def = '';
+          if (param.name === 'editor' && !def) def = 'hippo';
           newParams[param.name] = def;
         });
         setParams(newParams);
+
+        if (targetDir) {
+          updateNextId(targetDir);
+        }
       })
       .catch(console.error);
   }, [selectedTemplate]);
@@ -90,6 +115,14 @@ export default function ProjectBuilder() {
         revealInExplorer,
       });
       setStatus(`Success! Project created at ${res}`);
+
+      // Auto-increment ID and clear title for the next project
+      if (targetDir) {
+        setTimeout(() => {
+          updateNextId(targetDir);
+          setParams(prev => ({ ...prev, title: '' }));
+        }, 500);
+      }
     } catch (e: any) {
       setStatus(`Error: ${e}`);
     }

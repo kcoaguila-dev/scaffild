@@ -15,6 +15,7 @@ pub fn run() {
             template::pick_folder_and_scan,
             template::pick_directory,
             builder::build_project,
+            builder::get_next_project_id,
             ingest::ingest_media
         ])
         .run(tauri::generate_context!())
