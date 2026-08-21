@@ -3083,6 +3083,7 @@ dependencies = [
  "tauri",
  "tauri-build",
  "tauri-plugin-opener",
+ "tempfile",
  "twox-hash",
  "walkdir",
 ]

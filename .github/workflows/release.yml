@@ -1,0 +1,55 @@
+﻿name: Release Scaffild
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: 'windows-latest'
+            args: ''
+
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Tauri App & Package Installers (MSI, NSIS, EXE)
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: 'Scaffild ${{ github.ref_name }}'
+          releaseBody: |
+            ## Scaffild Production Release 🚀
+            
+            ### Included in this release:
+            - **Windows Setup Wizard (`.exe`)**: Automatic installation with desktop shortcut.
+            - **Windows MSI Installer (`.msi`)**: Enterprise / standard Windows installer.
+            - **Full 16:9 & 9:16 Social Video Templates** + Master `.prproj` and `.psd` files.
+            - **Dynamic Premiere Bins Synchronization (`SyncBins.jsx`)**.
+            - **3-2-1 Ingest Backup** with streaming `xxHash64` hardware verification.
+            - **Model Context Protocol (MCP) Server** for Claude Desktop & Cursor AI Agents.
+          releaseDraft: false
+          prerelease: false
+          args: ${{ matrix.args }}
