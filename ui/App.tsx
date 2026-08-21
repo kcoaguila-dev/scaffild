@@ -2,15 +2,48 @@ import { useState, useEffect } from 'react';
 import ProjectBuilder from './ProjectBuilder';
 import TemplateManager from './TemplateManager';
 import MediaIngest from './MediaIngest';
+import MenuBar, { RecentProjectItem } from './MenuBar';
+import ShortcutsModal from './ShortcutsModal';
+import AboutModal from './AboutModal';
 import { Film } from 'lucide-react';
+import { invoke } from '@tauri-apps/api/core';
 
 function App() {
   const [activeTab, setActiveTab] = useState<'build' | 'templates' | 'ingest'>('build');
   const [preselectedIngestDir, setPreselectedIngestDir] = useState<string>('');
+  const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
+  const [isAboutOpen, setIsAboutOpen] = useState(false);
+  const [recentProjects, setRecentProjects] = useState<RecentProjectItem[]>(() => {
+    try {
+      const saved = localStorage.getItem('scaffild_recent_projects');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const handleClearRecentProjects = () => {
+    setRecentProjects([]);
+    localStorage.removeItem('scaffild_recent_projects');
+  };
+
+  const handleAddRecentProject = (item: RecentProjectItem) => {
+    setRecentProjects(prev => {
+      const updated = [item, ...prev.filter(p => p.path !== item.path)].slice(0, 8);
+      localStorage.setItem('scaffild_recent_projects', JSON.stringify(updated));
+      return updated;
+    });
+  };
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey) {
+      if (e.key === 'F1') {
+        e.preventDefault();
+        setIsShortcutsOpen(true);
+      } else if (e.key === 'Escape') {
+        setIsShortcutsOpen(false);
+        setIsAboutOpen(false);
+      } else if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey) {
         if (e.key === '1') {
           e.preventDefault();
           setActiveTab('build');
@@ -33,54 +66,81 @@ function App() {
     setActiveTab('ingest');
   };
 
+  const handleBrowseTargetDir = async () => {
+    try {
+      const selected = await invoke<string | null>('pick_directory');
+      if (selected) {
+        localStorage.setItem('scaffild_target_dir', selected);
+        window.dispatchEvent(new CustomEvent('target-dir-changed', { detail: selected }));
+      }
+    } catch (e) {
+      console.error('Failed to pick directory:', e);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-[#121212] text-gray-200">
-      <header className="bg-gray-900 border-b border-gray-800 p-4">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-2 text-xl font-bold text-white tracking-wide">
-            <Film className="text-blue-500" />
-            Scaffild
+    <div className="min-h-screen bg-[#121212] text-gray-200 flex flex-col">
+      {/* Top Menu Bar (Post Haste Style) */}
+      <MenuBar
+        onSelectTab={setActiveTab}
+        onOpenShortcuts={() => setIsShortcutsOpen(true)}
+        onOpenAbout={() => setIsAboutOpen(true)}
+        onBrowseTargetDir={handleBrowseTargetDir}
+        recentProjects={recentProjects}
+        onClearRecentProjects={handleClearRecentProjects}
+        onNavigateToIngest={handleNavigateToIngest}
+      />
+
+      {/* Main App Header with Tabs */}
+      <header className="bg-gray-900 border-b border-gray-800 px-4 py-2 flex items-center justify-between">
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-2 text-base font-bold text-white tracking-wide select-none">
+            <Film className="text-blue-500" size={18} />
+            <span>Scaffild</span>
           </div>
-          <nav className="flex gap-2">
+          <nav className="flex items-center gap-1.5">
             <button
               onClick={() => setActiveTab('build')}
-              title="Ctrl + 1"
-              className={`px-3.5 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-1.5 ${
-                activeTab === 'build' ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-300 hover:bg-gray-850 hover:text-white'
+              className={`px-3 py-1 rounded text-xs font-semibold transition-colors ${
+                activeTab === 'build' ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-400 hover:bg-gray-800 hover:text-white'
               }`}
             >
-              <span>New Project</span>
-              <kbd className="text-[10px] px-1 py-0.5 rounded bg-gray-800/80 text-gray-400 font-mono">^1</kbd>
+              New Project
             </button>
             <button
               onClick={() => setActiveTab('templates')}
-              title="Ctrl + 2"
-              className={`px-3.5 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-1.5 ${
-                activeTab === 'templates' ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-300 hover:bg-gray-850 hover:text-white'
+              className={`px-3 py-1 rounded text-xs font-semibold transition-colors ${
+                activeTab === 'templates' ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-400 hover:bg-gray-800 hover:text-white'
               }`}
             >
-              <span>Templates</span>
-              <kbd className="text-[10px] px-1 py-0.5 rounded bg-gray-800/80 text-gray-400 font-mono">^2</kbd>
+              Templates
             </button>
             <button
               onClick={() => setActiveTab('ingest')}
-              title="Ctrl + 3"
-              className={`px-3.5 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-1.5 ${
-                activeTab === 'ingest' ? 'bg-purple-600 text-white shadow-sm' : 'text-gray-400 hover:bg-gray-850 hover:text-gray-200'
+              className={`px-3 py-1 rounded text-xs font-semibold transition-colors ${
+                activeTab === 'ingest' ? 'bg-purple-600 text-white shadow-sm' : 'text-gray-400 hover:bg-gray-800 hover:text-gray-200'
               }`}
             >
-              <span>Media Ingest</span>
-              <kbd className="text-[10px] px-1 py-0.5 rounded bg-gray-800/80 text-gray-400 font-mono">^3</kbd>
+              Media Ingest
             </button>
           </nav>
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto p-4">
-        {activeTab === 'build' && <ProjectBuilder onNavigateToIngest={handleNavigateToIngest} />}
+      {/* Main Content Area */}
+      <main className="max-w-6xl mx-auto p-4 flex-grow w-full">
+        {activeTab === 'build' && (
+          <ProjectBuilder
+            onProjectCreated={handleAddRecentProject}
+          />
+        )}
         {activeTab === 'templates' && <TemplateManager />}
         {activeTab === 'ingest' && <MediaIngest initialTargetDir={preselectedIngestDir} />}
       </main>
+
+      {/* Modals */}
+      <ShortcutsModal isOpen={isShortcutsOpen} onClose={() => setIsShortcutsOpen(false)} />
+      <AboutModal isOpen={isAboutOpen} onClose={() => setIsAboutOpen(false)} />
     </div>
   );
 }

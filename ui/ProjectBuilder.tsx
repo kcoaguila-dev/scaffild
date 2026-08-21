@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
-import { FolderPlus, FolderOpen, Film, ExternalLink, HardDriveDownload, Sparkles, Clock } from 'lucide-react';
+import { FolderPlus, FolderOpen, Sparkles } from 'lucide-react';
+import { RecentProjectItem } from './MenuBar';
 
 export interface TemplateParam {
   name: string;
@@ -10,22 +11,15 @@ export interface TemplateParam {
   default?: string;
 }
 
-interface RecentProject {
-  name: string;
-  path: string;
-  template: string;
-  createdAt: string;
-}
-
 interface ProjectBuilderProps {
-  onNavigateToIngest?: (dir: string) => void;
+  onProjectCreated?: (item: RecentProjectItem) => void;
 }
 
 function sanitizeName(name: string): string {
   return name.trim().replace(/[ /\\:*?"<>|.]+/g, '_').replace(/_+/g, '_').replace(/^_+|_+$/g, '');
 }
 
-export default function ProjectBuilder({ onNavigateToIngest }: ProjectBuilderProps) {
+export default function ProjectBuilder({ onProjectCreated }: ProjectBuilderProps) {
   const [templates, setTemplates] = useState<string[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState('');
   const [templateParams, setTemplateParams] = useState<TemplateParam[]>([]);
@@ -37,14 +31,6 @@ export default function ProjectBuilder({ onNavigateToIngest }: ProjectBuilderPro
   const [revealInExplorer, setRevealInExplorer] = useState(false);
   const [includeSyncBins, setIncludeSyncBins] = useState(true);
   const [status, setStatus] = useState('');
-  const [recentProjects, setRecentProjects] = useState<RecentProject[]>(() => {
-    try {
-      const saved = localStorage.getItem('scaffild_recent_projects');
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  });
 
   const updateNextId = async (dir: string) => {
     if (!dir) return;
@@ -65,6 +51,14 @@ export default function ProjectBuilder({ onNavigateToIngest }: ProjectBuilderPro
         setSelectedTemplate(t[0]);
       }
     }).catch(console.error);
+
+    const handleDirChanged = (e: any) => {
+      if (e.detail) {
+        setTargetDir(e.detail);
+      }
+    };
+    window.addEventListener('target-dir-changed', handleDirChanged);
+    return () => window.removeEventListener('target-dir-changed', handleDirChanged);
   }, []);
 
   useEffect(() => {
@@ -166,18 +160,15 @@ export default function ProjectBuilder({ onNavigateToIngest }: ProjectBuilderPro
 
       setStatus(`Success! Project created at ${res}`);
 
-      // Save to recent projects
-      const newEntry: RecentProject = {
-        name: liveProjectName,
-        path: res,
-        template: selectedTemplate,
-        createdAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      };
-      setRecentProjects(prev => {
-        const nextList = [newEntry, ...prev.filter(p => p.path !== res)].slice(0, 5);
-        localStorage.setItem('scaffild_recent_projects', JSON.stringify(nextList));
-        return nextList;
-      });
+      // Notify parent of newly created project
+      if (onProjectCreated) {
+        onProjectCreated({
+          name: liveProjectName,
+          path: res,
+          template: selectedTemplate,
+          createdAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        });
+      }
 
       // Auto-increment ID and clear title for the next project
       if (targetDir) {
@@ -217,32 +208,16 @@ export default function ProjectBuilder({ onNavigateToIngest }: ProjectBuilderPro
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [targetDir, selectedTemplate, params, templateParams, openProjectAfterCreate, revealInExplorer, includeSyncBins, liveProjectName]);
 
-  const handleOpenPremiere = async (path: string) => {
-    try {
-      await invoke('open_project_in_premiere', { projectPath: path });
-    } catch (e) {
-      console.error('Failed to open project:', e);
-    }
-  };
-
   return (
-    <div className="space-y-6 max-w-2xl mx-auto mt-6">
+    <div className="max-w-2xl mx-auto mt-6">
       <div className="p-6 bg-gray-900 text-white rounded-lg shadow-md border border-gray-800">
-        <h2 className="text-2xl font-bold mb-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <FolderPlus className="text-blue-400" /> New Project
-          </div>
-          <span className="text-xs text-gray-500 font-mono font-normal flex items-center gap-1.5">
-            <kbd className="px-1.5 py-0.5 rounded bg-gray-800 text-gray-300 border border-gray-700">Ctrl + Enter</kbd> to build
-          </span>
+        <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+          <FolderPlus className="text-blue-400" /> New Project
         </h2>
 
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1 flex justify-between items-center">
-              <span>Target Directory</span>
-              <span className="text-[11px] text-gray-400 font-mono">Ctrl + O</span>
-            </label>
+            <label className="block text-sm font-medium mb-1">Target Directory</label>
             <div className="flex gap-2">
               <input
                 type="text"
@@ -346,10 +321,9 @@ export default function ProjectBuilder({ onNavigateToIngest }: ProjectBuilderPro
 
           <button
             onClick={handleBuild}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-4 rounded transition-colors shadow-sm flex items-center justify-center gap-2"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-4 rounded transition-colors shadow-sm"
           >
-            <span>Build Project</span>
-            <kbd className="text-[11px] px-1.5 py-0.5 rounded bg-blue-700/80 text-blue-200 font-mono">Ctrl + Enter</kbd>
+            Build Project
           </button>
 
           {status && (
@@ -359,68 +333,6 @@ export default function ProjectBuilder({ onNavigateToIngest }: ProjectBuilderPro
           )}
         </div>
       </div>
-
-      {/* Recent Projects History Panel */}
-      {recentProjects.length > 0 && (
-        <div className="p-5 bg-gray-900/80 text-white rounded-lg shadow-md border border-gray-800/90 space-y-3">
-          <div className="flex items-center justify-between text-sm font-semibold text-gray-300">
-            <div className="flex items-center gap-2">
-              <Clock size={16} className="text-blue-400" />
-              <span>Recent Projects</span>
-            </div>
-            <button
-              onClick={() => {
-                setRecentProjects([]);
-                localStorage.removeItem('scaffild_recent_projects');
-              }}
-              className="text-xs text-gray-500 hover:text-gray-400 transition-colors"
-            >
-              Clear History
-            </button>
-          </div>
-
-          <div className="space-y-2">
-            {recentProjects.map((p, idx) => (
-              <div
-                key={idx}
-                className="p-3 bg-gray-800/60 hover:bg-gray-800 rounded-md border border-gray-700/60 flex items-center justify-between transition-colors"
-              >
-                <div className="min-w-0 pr-3">
-                  <div className="font-semibold text-sm text-gray-100 truncate">{p.name}</div>
-                  <div className="text-[11px] text-gray-400 font-mono truncate">{p.path}</div>
-                </div>
-
-                <div className="flex items-center gap-1.5 shrink-0">
-                  <button
-                    onClick={() => handleOpenPremiere(p.path)}
-                    title="Open in Premiere Pro"
-                    className="p-1.5 bg-gray-700 hover:bg-purple-600 text-gray-200 hover:text-white rounded transition-colors"
-                  >
-                    <Film size={14} />
-                  </button>
-                  <button
-                    onClick={() => invoke('open_project_in_premiere', { projectPath: p.path })}
-                    title="Reveal in File Explorer"
-                    className="p-1.5 bg-gray-700 hover:bg-blue-600 text-gray-200 hover:text-white rounded transition-colors"
-                  >
-                    <ExternalLink size={14} />
-                  </button>
-                  {onNavigateToIngest && (
-                    <button
-                      onClick={() => onNavigateToIngest(p.path)}
-                      title="Offload Media into this Project"
-                      className="px-2 py-1.5 bg-gray-700 hover:bg-emerald-600 text-gray-200 hover:text-white rounded text-xs flex items-center gap-1 transition-colors font-medium"
-                    >
-                      <HardDriveDownload size={13} />
-                      <span>Ingest</span>
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

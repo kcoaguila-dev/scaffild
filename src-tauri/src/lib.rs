@@ -14,6 +14,7 @@ pub fn run() {
             template::scan_directory_structure,
             template::pick_folder_and_scan,
             template::pick_directory,
+            template::open_templates_dir,
             builder::build_project,
             builder::open_project_in_premiere,
             builder::get_next_project_id,

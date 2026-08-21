@@ -237,3 +237,10 @@ pub fn pick_directory() -> Result<Option<String>, String> {
     }
 }
 
+#[tauri::command]
+pub fn open_templates_dir() -> Result<(), String> {
+    let path = get_templates_dir();
+    let _ = open::that(path);
+    Ok(())
+}
+
