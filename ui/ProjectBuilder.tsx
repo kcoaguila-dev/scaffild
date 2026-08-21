@@ -200,7 +200,7 @@ export default function ProjectBuilder() {
         </div>
 
         {/* Options */}
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3 pt-2 pb-1 text-xs text-gray-300 border-t border-gray-800/80">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 pb-1 text-xs text-gray-300 border-t border-gray-800/80">
           <label className="flex items-center gap-2 cursor-pointer select-none hover:text-white transition-colors">
             <input
               type="checkbox"
@@ -208,7 +208,7 @@ export default function ProjectBuilder() {
               onChange={e => setOpenProjectAfterCreate(e.target.checked)}
               className="rounded bg-gray-800 border-gray-700 text-blue-500 focus:ring-0 focus:ring-offset-0 cursor-pointer"
             />
-            <span>Open project in Premiere Pro / After Effects after creation</span>
+            <span>Open project after creation</span>
           </label>
 
           <label className="flex items-center gap-2 cursor-pointer select-none hover:text-white transition-colors">
@@ -218,7 +218,7 @@ export default function ProjectBuilder() {
               onChange={e => setRevealInExplorer(e.target.checked)}
               className="rounded bg-gray-800 border-gray-700 text-blue-500 focus:ring-0 focus:ring-offset-0 cursor-pointer"
             />
-            <span>Show folder in File Explorer</span>
+            <span>Reveal folder in File Explorer</span>
           </label>
         </div>
 
