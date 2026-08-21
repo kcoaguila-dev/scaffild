@@ -8,19 +8,23 @@ use std::collections::HashMap;
 
 #[derive(serde::Deserialize)]
 pub struct ProjectParams {
-    id: String,
-    title: String,
-    date: String,
-    editor: String,
+    /// Holds the defined parameters explicitly rendered in the UI and defined by the template's schema.
+    #[serde(flatten)]
+    pub params: HashMap<String, String>,
+
+    /// Fallback for arbitrary ad-hoc tokens passed from external integrations (like ExtendScript)
+    /// that are not strictly defined as part of the formal template schema parameters.
     #[serde(default)]
-    custom: HashMap<String, String>,
+    pub custom: HashMap<String, String>,
 }
 
 fn replace_tokens(text: &str, params: &ProjectParams) -> String {
-    let mut result = text.replace("{{id}}", &params.id)
-        .replace("{{title}}", &params.title)
-        .replace("{{date}}", &params.date)
-        .replace("{{editor}}", &params.editor);
+    let mut result = text.to_string();
+
+    for (key, val) in &params.params {
+        let token = format!("{{{{{}}}}}", key);
+        result = result.replace(&token, val);
+    }
 
     for (key, val) in &params.custom {
         let token = format!("{{{{{}}}}}", key);
@@ -126,10 +130,16 @@ pub fn build_project(
     let template = load_template(template_name)?;
     let base_path = PathBuf::from(&target_dir);
 
-    let safe_id = sanitize_filename(&params.id);
-    let safe_title = sanitize_filename(&params.title);
+    let id_val = params.params.get("id").map(|s| s.as_str()).unwrap_or("Project");
+    let title_val = params.params.get("title").map(|s| s.as_str()).unwrap_or("Untitled");
+
+    let safe_id = sanitize_filename(id_val);
+    let safe_title = sanitize_filename(title_val);
 
     let root_folder_name = format!("{}_{}", safe_id, safe_title);
+
+    let prproj_name = format!("{}.prproj", root_folder_name);
+
     let project_root = base_path.join(&root_folder_name);
 
     if project_root.exists() {
@@ -141,7 +151,6 @@ pub fn build_project(
         build_structure(&project_root, node, &params)?;
     }
 
-    let prproj_name = format!("{}_{}.prproj", safe_id, safe_title);
     let prproj_path = project_root.join(&prproj_name);
     create_dummy_prproj(&prproj_path)?;
 

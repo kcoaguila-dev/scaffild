@@ -2,11 +2,36 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct TemplateParam {
+    pub name: String,
+    pub label: Option<String>,
+    pub required: Option<bool>,
+    pub locked: Option<bool>,
+    pub default: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Template {
     pub name: String,
     pub description: Option<String>,
+    pub parameters: Option<Vec<TemplateParam>>,
     pub structure: Vec<serde_yaml::Value>,
+}
+
+impl Template {
+    pub fn get_parameters(&self) -> Vec<TemplateParam> {
+        if let Some(params) = &self.parameters {
+            params.clone()
+        } else {
+            vec![
+                TemplateParam { name: "id".to_string(), label: Some("Project ID".to_string()), required: Some(true), locked: None, default: None },
+                TemplateParam { name: "title".to_string(), label: Some("Title".to_string()), required: Some(true), locked: None, default: None },
+                TemplateParam { name: "date".to_string(), label: Some("Date".to_string()), required: None, locked: None, default: None },
+                TemplateParam { name: "editor".to_string(), label: Some("Editor".to_string()), required: None, locked: None, default: None },
+            ]
+        }
+    }
 }
 
 fn get_templates_dir() -> PathBuf {

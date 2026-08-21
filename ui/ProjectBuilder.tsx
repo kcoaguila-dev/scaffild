@@ -2,21 +2,51 @@ import { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { FolderPlus } from 'lucide-react';
 
+export interface TemplateParam {
+  name: string;
+  label?: string;
+  required?: boolean;
+  locked?: boolean;
+  default?: string;
+}
+
 export default function ProjectBuilder() {
   const [templates, setTemplates] = useState<string[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState('default');
+  const [templateParams, setTemplateParams] = useState<TemplateParam[]>([]);
   const [targetDir, setTargetDir] = useState('');
-  const [params, setParams] = useState({
-    id: '0001',
-    title: 'New Project',
-    date: new Date().toISOString().split('T')[0],
-    editor: 'Jules',
-  });
+  const [params, setParams] = useState<Record<string, string>>({});
   const [status, setStatus] = useState('');
 
   useEffect(() => {
     invoke<string[]>('list_templates').then(setTemplates).catch(console.error);
   }, []);
+
+  useEffect(() => {
+    invoke<any>('load_template', { name: selectedTemplate })
+      .then(data => {
+        const p: TemplateParam[] = data.parameters || [
+          { name: 'id', label: 'Project ID', required: true },
+          { name: 'title', label: 'Title', required: true },
+          { name: 'date', label: 'Date' },
+          { name: 'editor', label: 'Editor' },
+        ];
+        setTemplateParams(p);
+
+        // Initialize state with default values where applicable
+        const newParams: Record<string, string> = {};
+        p.forEach(param => {
+          let def = param.default || '';
+          if (param.name === 'date' && !def) def = new Date().toISOString().split('T')[0];
+          if (param.name === 'id' && !def) def = '0001';
+          if (param.name === 'title' && !def) def = 'New Project';
+          if (param.name === 'editor' && !def) def = 'Jules';
+          newParams[param.name] = def;
+        });
+        setParams(newParams);
+      })
+      .catch(console.error);
+  }, [selectedTemplate]);
 
   const handleBuild = async () => {
     try {
@@ -24,6 +54,15 @@ export default function ProjectBuilder() {
         setStatus('Please enter a target directory.');
         return;
       }
+
+      // Check required params
+      for (const param of templateParams) {
+        if (param.required && !params[param.name]) {
+          setStatus(`Error: ${param.label || param.name} is required.`);
+          return;
+        }
+      }
+
       setStatus('Building...');
       const res = await invoke('build_project', {
         targetDir,
@@ -67,42 +106,20 @@ export default function ProjectBuilder() {
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">Project ID</label>
-            <input
-              type="text"
-              value={params.id}
-              onChange={e => setParams({...params, id: e.target.value})}
-              className="w-full bg-gray-800 border border-gray-700 rounded p-2 focus:outline-none focus:border-blue-500"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Title</label>
-            <input
-              type="text"
-              value={params.title}
-              onChange={e => setParams({...params, title: e.target.value})}
-              className="w-full bg-gray-800 border border-gray-700 rounded p-2 focus:outline-none focus:border-blue-500"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Date</label>
-            <input
-              type="text"
-              value={params.date}
-              onChange={e => setParams({...params, date: e.target.value})}
-              className="w-full bg-gray-800 border border-gray-700 rounded p-2 focus:outline-none focus:border-blue-500"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Editor</label>
-            <input
-              type="text"
-              value={params.editor}
-              onChange={e => setParams({...params, editor: e.target.value})}
-              className="w-full bg-gray-800 border border-gray-700 rounded p-2 focus:outline-none focus:border-blue-500"
-            />
-          </div>
+          {templateParams.map(param => (
+            <div key={param.name}>
+              <label className="block text-sm font-medium mb-1">
+                {param.label || param.name} {param.required && <span className="text-red-400">*</span>}
+              </label>
+              <input
+                type="text"
+                value={params[param.name] || ''}
+                readOnly={param.locked}
+                onChange={e => setParams({ ...params, [param.name]: e.target.value })}
+                className={`w-full bg-gray-800 border border-gray-700 rounded p-2 focus:outline-none focus:border-blue-500 ${param.locked ? 'opacity-50 cursor-not-allowed' : ''}`}
+              />
+            </div>
+          ))}
         </div>
 
         <button
