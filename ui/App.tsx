@@ -15,24 +15,30 @@ function App() {
             <Film className="text-blue-500" />
             Slate
           </div>
-          <nav className="flex gap-4">
+          <nav className="flex gap-2">
             <button
               onClick={() => setActiveTab('build')}
-              className={`px-3 py-1 rounded transition-colors ${activeTab === 'build' ? 'bg-blue-600 text-white' : 'hover:bg-gray-800'}`}
+              className={`px-3.5 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                activeTab === 'build' ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-300 hover:bg-gray-850 hover:text-white'
+              }`}
             >
-              Builder
+              New Project
             </button>
             <button
               onClick={() => setActiveTab('templates')}
-              className={`px-3 py-1 rounded transition-colors ${activeTab === 'templates' ? 'bg-blue-600 text-white' : 'hover:bg-gray-800'}`}
+              className={`px-3.5 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                activeTab === 'templates' ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-300 hover:bg-gray-850 hover:text-white'
+              }`}
             >
               Templates
             </button>
             <button
               onClick={() => setActiveTab('ingest')}
-              className={`px-3 py-1 rounded transition-colors ${activeTab === 'ingest' ? 'bg-blue-600 text-white' : 'hover:bg-gray-800'}`}
+              className={`px-3.5 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                activeTab === 'ingest' ? 'bg-purple-600 text-white shadow-sm' : 'text-gray-400 hover:bg-gray-850 hover:text-gray-200'
+              }`}
             >
-              Ingest
+              Media Ingest
             </button>
           </nav>
         </div>

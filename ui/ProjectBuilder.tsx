@@ -105,7 +105,7 @@ export default function ProjectBuilder() {
   return (
     <div className="p-6 bg-gray-900 text-white rounded-lg shadow-md max-w-2xl mx-auto mt-8">
       <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-        <FolderPlus /> Project Builder
+        <FolderPlus className="text-blue-400" /> New Project
       </h2>
 
       <div className="space-y-4">
