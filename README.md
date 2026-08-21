@@ -1,28 +1,43 @@
-# Slate (Scaffild)
+# Slate
 
-**Slate** is a desktop post-production scaffolding tool built with **Tauri v2**, **React 19**, **TypeScript**, and **Rust**. It automates project directory structuring, templating with dynamic variables, fast media offloading with checksum verification, and Adobe Premiere Pro bin synchronization.
+**Slate** is a modern, blazing-fast desktop post-production project scaffolding and media management tool built with **Tauri v2**, **React 19**, **TypeScript**, and **Rust**. Designed as a clean, powerful alternative to Post Haste, Slate automates project directory structuring, genuine Adobe project template cloning, intelligent sequential project numbering, and checksum-verified media offloading.
 
 ---
 
-## Features
+## Key Features
 
-- 📁 **Project Scaffolding**: Create standardized project folder trees with dynamic variable substitution (`{{id}}`, `{{title}}`, `{{date}}`, `{{editor}}`, and custom parameters).
-- 🎬 **Automatic Premiere Project Creation**: Generates an initial `.prproj` with structured bins and opens it automatically.
-- 🌳 **Visual & YAML Template Manager**: Design folder hierarchy visually or edit raw YAML templates stored in `~/.slate/templates/`.
-- ⚡ **High-Speed Media Ingest**: Parallel multi-threaded SD card/camera offloading with streaming xxHash64 checksum verification and manifest creation (`checksum_manifest.txt`).
-- 🔌 **Premiere Pro Companion (`SyncBins.jsx`)**: ExtendScript companion that mirrors folder structures from disk into Premiere bins and batch-imports raw footage into `02_FOOTAGE/A_ROLL`.
+- 📁 **Post Haste 2-Pane Template Manager**:
+  - Clean, unopinionated template manager with **no forced pre-installed templates** — start completely blank or import existing folder hierarchies.
+  - Interactive visual tree editor with drag-and-drop reordering, hierarchy guide lines, and Adobe file badges (`Pr`, `Ps`, `Ae`, `Ai`).
+  - Native 1-click folder import: reads complete folder structures (including empty directories) from your disk.
+
+- 🔢 **Smart Auto-Incrementing Project IDs**:
+  - Automatically scans your target directory on disk (e.g., `0001_...`, `0006_...`) and pre-fills the next sequential number (`0007`) with proper zero-padding.
+  - Automatically increments to the next ID upon project creation and clears the title field for immediate back-to-back scaffolding.
+
+- 🎬 **Genuine Adobe Template Asset Cloning**:
+  - Copies your **real, pre-configured Premiere Pro (`.prproj`)**, **Photoshop (`.psd`)**, and **After Effects (`.aep`)** template files.
+  - Preserves custom sequences, bins, track layouts, timeline presets, and layers with zero corruption or XML errors.
+
+- 🏷️ **Industry Standard Naming Conventions**:
+  - Automatically sanitizes spaces to underscores (`_`) across project folders and filenames.
+  - Composes full parameter tokens: `[ID]_[TITLE]_[DATE]_[EDITOR]`.
+
+- ⚡ **High-Speed Checksum Media Ingest**:
+  - Multi-threaded camera card / SD card offloading using parallel I/O.
+  - Streaming `xxHash64` verification and automatic `checksum_manifest.txt` generation.
+
+- 🔌 **Adobe Premiere Pro Companion (`SyncBins.jsx`)**:
+  - ExtendScript script that mirrors folder trees on disk into Premiere project bins and batch-imports footage.
 
 ---
 
 ## Prerequisites
 
-Before running Slate, ensure you have the following installed:
-
-1. **Node.js**: `v18+` (v20+ recommended) and `npm`
-2. **Rust**: Latest stable Rust toolchain (`rustup`, `cargo`)
-3. **Windows Dependencies** (for Tauri v2):
-   - [Microsoft Visual Studio C++ Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/)
-   - [WebView2 Runtime](https://developer.microsoft.com/en-us/microsoft-edge/webview2/) (pre-installed on Windows 10/11)
+- **Node.js**: `v18+` (v20+ recommended) and `npm`
+- **Rust**: Latest stable Rust toolchain (`rustup`, `cargo`)
+- **Windows / macOS / Linux**:
+  - On Windows: [Microsoft Visual Studio C++ Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) and [WebView2 Runtime](https://developer.microsoft.com/en-us/microsoft-edge/webview2/) (pre-installed on Windows 10/11).
 
 ---
 
@@ -34,42 +49,17 @@ Before running Slate, ensure you have the following installed:
 npm install
 ```
 
-### 2. Seed Default Templates (Optional)
+### 2. Run Desktop App (Development)
 
-Slate stores templates in `~/.slate/templates/`. You can copy the bundled default template:
-
-**PowerShell (Windows):**
-```powershell
-New-Item -ItemType Directory -Force -Path $HOME\.slate\templates
-Copy-Item -Path templates\default.yaml -Destination $HOME\.slate\templates\default.yaml -Force
-```
-
-**Bash (macOS / Linux):**
-```bash
-mkdir -p ~/.slate/templates
-cp templates/default.yaml ~/.slate/templates/default.yaml
-```
-
----
-
-## Running the Application
-
-### 🖥️ Desktop App (Development Mode)
-Launches the full native desktop app powered by Tauri and Vite:
+Launches the native desktop application powered by Tauri v2 and Vite:
 
 ```bash
 npm run tauri dev
 ```
 
-### 🌐 Web Frontend Only (Browser Preview)
-Starts the Vite dev server on `http://localhost:1420` (useful for UI tweaking):
+### 3. Build Production Binary
 
-```bash
-npm run dev
-```
-
-### 📦 Build Production Executable
-Compiles the optimized production desktop binary into `src-tauri/target/release/`:
+Compiles an optimized production desktop installer / binary into `src-tauri/target/release/`:
 
 ```bash
 npm run tauri build
@@ -77,45 +67,40 @@ npm run tauri build
 
 ---
 
-## Template Format
+## Template System
 
-Templates are stored in YAML format in `~/.slate/templates/<template_name>.yaml`:
+Templates and their companion assets are stored locally in your home directory at `~/.slate/templates/`:
+
+- **Template Definition**: `~/.slate/templates/<name>.yaml`
+- **Template Assets**: `~/.slate/templates/<name>_files/` (stores your genuine `.prproj`, `.psd`, `.aep` files)
+
+### Example Template (`~/.slate/templates/video_editing.yaml`):
 
 ```yaml
-name: Commercial Project
-description: Standard agency commercial video template
+name: video_editing
+description: Standard post-production video editing template
 parameters:
-  - client
-  - campaign
-  - resolution
+  - id
+  - title
+  - date
+  - editor
 structure:
-  - 01_SEQUENCES
+  - 01_PROJECT_FILES:
+      - "[project].prproj"
   - 02_FOOTAGE:
       - A_ROLL
       - B_ROLL
-      - DRONE
-      - ARCHIVE
   - 03_AUDIO:
       - MUSIC
       - SFX
       - VO
-      - MIX
-  - 04_GFX:
-      - 2D
-      - 3D
-      - LOGOS
-  - 05_EXPORTS:
-      - ROUGHS
-      - FINALS
+  - 04_GRAPHICS:
+      - IMAGES
+      - THUMBNAILS:
+          - "[project].psd"
+      - TITLES
+  - 05_EXPORTS
 ```
-
-### Supported Tokens
-
-- `{{id}}` - Project identifier (e.g. `0001`)
-- `{{title}}` - Project title (e.g. `BrandCampaign`)
-- `{{date}}` - Creation date (e.g. `2026-08-21`)
-- `{{editor}}` - Editor name
-- `{{custom_key}}` - Any custom parameter defined in the template's `parameters` list
 
 ---
 
@@ -123,20 +108,17 @@ structure:
 
 Inside the [`premiere_plugin/`](premiere_plugin/) folder is `SyncBins.jsx`:
 
-1. Open your project in **Adobe Premiere Pro**.
+1. Open your generated project in **Adobe Premiere Pro**.
 2. Run `SyncBins.jsx` (via **File > Scripts > Run Script File...** or ExtendScript Toolkit).
-3. The script will:
-   - Read the project's root folder on disk.
-   - Recreate missing folders as Premiere bins.
-   - Automatically import supported media (`mp4`, `mov`, `mxf`, `wav`, `mp3`, `r3d`, `braw`, etc.) into the `02_FOOTAGE/A_ROLL` bin.
+3. The script reads the project root folder on disk and automatically syncs all subdirectories into organized Premiere bins.
 
 ---
 
 ## Tech Stack
 
-- **Frontend**: React 19, TypeScript, Vite, Tailwind CSS, Lucide React, YAML
-- **Backend (Tauri v2)**: Rust, Serde, Rayon (parallel processing), xxHash64, Flate2 (GZip)
-- **Plugin**: Adobe ExtendScript (JSX)
+- **Frontend**: React 19, TypeScript, Vite, Tailwind CSS, Lucide Icons, YAML parser
+- **Desktop Backend (Tauri v2)**: Rust, Serde, Rayon, RFD (Native OS Dialogs), WalkDir, xxHash64, Dirs
+- **Scripting**: Adobe ExtendScript (JSX)
 
 ---
 
