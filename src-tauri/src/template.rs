@@ -59,7 +59,7 @@ impl Template {
 
 pub fn get_templates_dir() -> PathBuf {
     let mut path = dirs::home_dir().unwrap_or_else(|| PathBuf::from("."));
-    path.push(".slate");
+    path.push(".scaffild");
     path.push("templates");
     if !path.exists() {
         let _ = fs::create_dir_all(&path);

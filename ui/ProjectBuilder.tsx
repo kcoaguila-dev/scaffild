@@ -15,7 +15,7 @@ export default function ProjectBuilder() {
   const [selectedTemplate, setSelectedTemplate] = useState('');
   const [templateParams, setTemplateParams] = useState<TemplateParam[]>([]);
   const [targetDir, setTargetDir] = useState(() => {
-    return localStorage.getItem('slate_target_dir') || 'C:\\Users\\hippo\\Videos\\00_PROJECTS';
+    return localStorage.getItem('scaffild_target_dir') || localStorage.getItem('slate_target_dir') || 'C:\\Users\\hippo\\Videos\\00_PROJECTS';
   });
   const [params, setParams] = useState<Record<string, string>>({});
   const [openProjectAfterCreate, setOpenProjectAfterCreate] = useState(true);
@@ -45,7 +45,7 @@ export default function ProjectBuilder() {
 
   useEffect(() => {
     if (targetDir) {
-      localStorage.setItem('slate_target_dir', targetDir);
+      localStorage.setItem('scaffild_target_dir', targetDir);
       updateNextId(targetDir);
     }
   }, [targetDir]);

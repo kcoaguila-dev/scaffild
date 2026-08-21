@@ -13,7 +13,7 @@ function App() {
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2 text-xl font-bold text-white">
             <Film className="text-blue-500" />
-            Slate
+            Scaffild
           </div>
           <nav className="flex gap-2">
             <button

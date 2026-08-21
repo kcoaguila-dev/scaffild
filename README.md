@@ -1,6 +1,6 @@
-# Slate
+# Scaffild
 
-**Slate** is a modern, blazing-fast desktop post-production project scaffolding and media management tool built with **Tauri v2**, **React 19**, **TypeScript**, and **Rust**. Designed as a clean, powerful alternative to Post Haste, Slate automates project directory structuring, genuine Adobe project template cloning, intelligent sequential project numbering, and checksum-verified media offloading.
+**Scaffild** is a modern, blazing-fast desktop post-production project scaffolding and media management tool built with **Tauri v2**, **React 19**, **TypeScript**, and **Rust**. Designed as a clean, powerful alternative to Post Haste, Scaffild automates project directory structuring, genuine Adobe project template cloning, intelligent sequential project numbering, and checksum-verified media offloading.
 
 ---
 
@@ -69,12 +69,12 @@ npm run tauri build
 
 ## Template System
 
-Templates and their companion assets are stored locally in your home directory at `~/.slate/templates/`:
+Templates and their companion assets are stored locally in your home directory at `~/.scaffild/templates/`:
 
-- **Template Definition**: `~/.slate/templates/<name>.yaml`
-- **Template Assets**: `~/.slate/templates/<name>_files/` (stores your genuine `.prproj`, `.psd`, `.aep` files)
+- **Template Definition**: `~/.scaffild/templates/<name>.yaml`
+- **Template Assets**: `~/.scaffild/templates/<name>_files/` (stores your genuine `.prproj`, `.psd`, `.aep` files)
 
-### Example Template (`~/.slate/templates/video_editing.yaml`):
+### Example Template (`~/.scaffild/templates/video_editing.yaml`):
 
 ```yaml
 name: video_editing

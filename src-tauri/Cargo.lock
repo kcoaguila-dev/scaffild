@@ -3068,6 +3068,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "scaffild"
+version = "0.1.0"
+dependencies = [
+ "base64 0.23.1",
+ "dirs",
+ "flate2",
+ "open",
+ "rayon",
+ "rfd",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-opener",
+ "twox-hash",
+ "walkdir",
+]
+
+[[package]]
 name = "schemars"
 version = "0.8.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3375,26 +3395,6 @@ name = "slab"
 version = "0.4.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0c790de23124f9ab44544d7ac05d60440adc586479ce501c1d6d7da3cd8c9cf5"
-
-[[package]]
-name = "slate"
-version = "0.1.0"
-dependencies = [
- "base64 0.23.1",
- "dirs",
- "flate2",
- "open",
- "rayon",
- "rfd",
- "serde",
- "serde_json",
- "serde_yaml",
- "tauri",
- "tauri-build",
- "tauri-plugin-opener",
- "twox-hash",
- "walkdir",
-]
 
 [[package]]
 name = "smallvec"

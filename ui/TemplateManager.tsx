@@ -472,7 +472,7 @@ export default function TemplateManager() {
             </div>
 
             <p className="text-xs text-gray-300 mb-4">
-              Point to any existing project directory on your computer (like Post Haste), and Slate will recursively scan and generate the template tree with all folders and template files.
+              Point to any existing project directory on your computer (like Post Haste), and Scaffild will recursively scan and generate the template tree with all folders and template files.
             </p>
 
             <div className="space-y-4">

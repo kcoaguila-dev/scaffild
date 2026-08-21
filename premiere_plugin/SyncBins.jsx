@@ -1,5 +1,5 @@
 // SyncBins.jsx
-// Premiere Pro ExtendScript Companion for Slate
+// Premiere Pro ExtendScript Companion for Scaffild
 // Scans the active project's parent root folder on disk, constructs missing bins,
 // and recursively imports raw media files into 02_FOOTAGE/A_ROLL.
 
