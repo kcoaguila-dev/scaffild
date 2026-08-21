@@ -15,7 +15,7 @@ interface Template {
 
 export default function TemplateManager() {
   const [templates, setTemplates] = useState<string[]>([]);
-  const [selectedTemplate, setSelectedTemplate] = useState('default');
+  const [selectedTemplate, setSelectedTemplate] = useState('');
   const [templateData, setTemplateData] = useState<Template | null>(null);
   const [yamlText, setYamlText] = useState('');
   const [status, setStatus] = useState('');
@@ -30,6 +30,15 @@ export default function TemplateManager() {
     try {
       const t = await invoke<string[]>('list_templates');
       setTemplates(t);
+      if (t.length > 0) {
+        if (!selectedTemplate || !t.includes(selectedTemplate)) {
+          setSelectedTemplate(t[0]);
+        }
+      } else {
+        setSelectedTemplate('');
+        setTemplateData(null);
+        setYamlText('');
+      }
     } catch (e) {
       console.error(e);
     }
@@ -48,8 +57,12 @@ export default function TemplateManager() {
         })
         .catch(e => {
           console.error(e);
-          setYamlText('Error loading template.');
+          setTemplateData(null);
+          setYamlText('');
         });
+    } else {
+      setTemplateData(null);
+      setYamlText('');
     }
   }, [selectedTemplate]);
 
@@ -137,8 +150,12 @@ export default function TemplateManager() {
       await invoke('delete_template', { name: selectedTemplate });
       const remaining = templates.filter(t => t !== selectedTemplate);
       setTemplates(remaining);
-      const nextSelected = remaining[0] || 'default';
+      const nextSelected = remaining.length > 0 ? remaining[0] : '';
       setSelectedTemplate(nextSelected);
+      if (!nextSelected) {
+        setTemplateData(null);
+        setYamlText('');
+      }
       setStatus(`Deleted template "${selectedTemplate}"`);
       setTimeout(() => setStatus(''), 3000);
     } catch (e: any) {
@@ -269,8 +286,11 @@ export default function TemplateManager() {
             onChange={e => setSelectedTemplate(e.target.value)}
             className="w-full bg-gray-800 border border-gray-700 rounded p-2 focus:outline-none focus:border-blue-500 mb-4"
           >
-            <option value="default">default</option>
-            {templates.map(t => t !== 'default' && <option key={t} value={t}>{t}</option>)}
+            {templates.length === 0 ? (
+              <option value="">(No templates)</option>
+            ) : (
+              templates.map(t => <option key={t} value={t}>{t}</option>)
+            )}
           </select>
 
           <div className="flex gap-2 mb-6">

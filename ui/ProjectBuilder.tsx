@@ -12,17 +12,27 @@ export interface TemplateParam {
 
 export default function ProjectBuilder() {
   const [templates, setTemplates] = useState<string[]>([]);
-  const [selectedTemplate, setSelectedTemplate] = useState('default');
+  const [selectedTemplate, setSelectedTemplate] = useState('');
   const [templateParams, setTemplateParams] = useState<TemplateParam[]>([]);
   const [targetDir, setTargetDir] = useState('');
   const [params, setParams] = useState<Record<string, string>>({});
   const [status, setStatus] = useState('');
 
   useEffect(() => {
-    invoke<string[]>('list_templates').then(setTemplates).catch(console.error);
+    invoke<string[]>('list_templates').then(t => {
+      setTemplates(t);
+      if (t.length > 0) {
+        setSelectedTemplate(t[0]);
+      }
+    }).catch(console.error);
   }, []);
 
   useEffect(() => {
+    if (!selectedTemplate) {
+      setTemplateParams([]);
+      setParams({});
+      return;
+    }
     invoke<any>('load_template', { name: selectedTemplate })
       .then(data => {
         const rawParams = data.parameters || [
@@ -106,8 +116,11 @@ export default function ProjectBuilder() {
             onChange={e => setSelectedTemplate(e.target.value)}
             className="w-full bg-gray-800 border border-gray-700 rounded p-2 focus:outline-none focus:border-blue-500"
           >
-            <option value="default">default</option>
-            {templates.map(t => t !== 'default' && <option key={t} value={t}>{t}</option>)}
+            {templates.length === 0 ? (
+              <option value="">(No templates available)</option>
+            ) : (
+              templates.map(t => <option key={t} value={t}>{t}</option>)
+            )}
           </select>
         </div>
 
