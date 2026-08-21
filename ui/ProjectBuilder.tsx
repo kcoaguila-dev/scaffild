@@ -20,6 +20,7 @@ export default function ProjectBuilder() {
   const [params, setParams] = useState<Record<string, string>>({});
   const [openProjectAfterCreate, setOpenProjectAfterCreate] = useState(true);
   const [revealInExplorer, setRevealInExplorer] = useState(false);
+  const [includeSyncBins, setIncludeSyncBins] = useState(true);
   const [status, setStatus] = useState('');
 
   const updateNextId = async (dir: string) => {
@@ -113,6 +114,7 @@ export default function ProjectBuilder() {
         params,
         openProject: openProjectAfterCreate,
         revealInExplorer,
+        includeSyncBins,
       });
       setStatus(`Success! Project created at ${res}`);
 
@@ -219,6 +221,16 @@ export default function ProjectBuilder() {
               className="rounded bg-gray-800 border-gray-700 text-blue-500 focus:ring-0 focus:ring-offset-0 cursor-pointer"
             />
             <span>Reveal folder in File Explorer</span>
+          </label>
+
+          <label className="flex items-center gap-2 cursor-pointer select-none hover:text-white transition-colors col-span-1 sm:col-span-2">
+            <input
+              type="checkbox"
+              checked={includeSyncBins}
+              onChange={e => setIncludeSyncBins(e.target.checked)}
+              className="rounded bg-gray-800 border-gray-700 text-blue-500 focus:ring-0 focus:ring-offset-0 cursor-pointer"
+            />
+            <span>Include SyncBins.jsx companion in project files</span>
           </label>
         </div>
 

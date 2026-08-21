@@ -226,6 +226,100 @@ fn build_structure(
     Ok(())
 }
 
+const SYNC_BINS_SCRIPT: &str = r#"// SyncBins.jsx
+// Premiere Pro ExtendScript Companion for Scaffild
+// Scans the active project's parent root folder on disk, constructs missing bins,
+// and recursively imports raw media files into 02_FOOTAGE/A_ROLL.
+
+(function () {
+    var logMsg = "";
+    function log(msg) {
+        logMsg += msg + "\n";
+        $.writeln(msg);
+    }
+
+    if (!app.project) {
+        alert("No active Premiere Pro project.");
+        return;
+    }
+
+    var proj = app.project;
+    if (!proj.path) {
+        alert("Project is not saved on disk. Please save the project first.");
+        return;
+    }
+
+    var projFile = new File(proj.path);
+    var rootFolder = projFile.parent;
+    log("Root folder: " + rootFolder.fsName);
+
+    function syncDirectoryToBin(dir, parentBin) {
+        var files = dir.getFiles();
+        if (!files) return;
+
+        for (var i = 0; i < files.length; i++) {
+            var f = files[i];
+            if (f instanceof Folder && f.name.indexOf(".") !== 0) {
+                var bin = getOrCreateBin(f.name, parentBin);
+                syncDirectoryToBin(f, bin);
+            }
+        }
+    }
+
+    function getOrCreateBin(name, parentBin) {
+        var items = parentBin ? parentBin.children : app.project.rootItem.children;
+        for (var i = 0; i < items.numItems; i++) {
+            var item = items[i];
+            if (item.type === ProjectItemType.BIN && item.name === name) {
+                return item;
+            }
+        }
+        var newBin = parentBin ? parentBin.createBin(name) : app.project.rootItem.createBin(name);
+        return newBin;
+    }
+
+    function importMedia(folder, targetBin) {
+        if (!folder.exists) return;
+        var files = folder.getFiles();
+        if (!files) return;
+
+        var filesToImport = [];
+        for (var i = 0; i < files.length; i++) {
+            var f = files[i];
+            if (f instanceof Folder) {
+                var subBin = getOrCreateBin(f.name, targetBin);
+                importMedia(f, subBin);
+            } else if (f instanceof File) {
+                var ext = f.name.split('.').pop().toLowerCase();
+                var mediaExts = ["mp4", "mov", "mxf", "avi", "wav", "mp3", "jpg", "png", "r3d", "braw"];
+                if (mediaExts.indexOf(ext) !== -1) {
+                    filesToImport.push(f.fsName);
+                }
+            }
+        }
+
+        if (filesToImport.length > 0) {
+            app.project.importFiles(filesToImport, false, targetBin, false);
+            log("Imported " + filesToImport.length + " files into " + targetBin.name);
+        }
+    }
+
+    app.enableQE();
+    syncDirectoryToBin(rootFolder, null);
+
+    var aRollFolder = new Folder(rootFolder.fsName + "/02_FOOTAGE/A_ROLL");
+    if (aRollFolder.exists) {
+        var footageBin = getOrCreateBin("02_FOOTAGE", null);
+        var aRollBin = getOrCreateBin("A_ROLL", footageBin);
+        importMedia(aRollFolder, aRollBin);
+    } else {
+        log("No 02_FOOTAGE/A_ROLL folder found.");
+    }
+
+    alert("Sync complete.\n\n" + logMsg);
+})();
+"#;
+
 #[tauri::command]
 pub fn build_project(
     target_dir: String,
@@ -233,6 +327,7 @@ pub fn build_project(
     params: ProjectParams,
     open_project: Option<bool>,
     reveal_in_explorer: Option<bool>,
+    include_sync_bins: Option<bool>,
 ) -> Result<String, String> {
     let template = load_template(template_name.clone())?;
     let base_path = PathBuf::from(&target_dir);
@@ -248,6 +343,15 @@ pub fn build_project(
     let root_rel = PathBuf::new();
     for node in &template.structure {
         build_structure(&project_root, node, &template_name, &root_rel, &root_folder_name, &params)?;
+    }
+
+    if include_sync_bins.unwrap_or(true) {
+        let scripts_dir = if project_root.join("01_PROJECT_FILES").exists() {
+            project_root.join("01_PROJECT_FILES")
+        } else {
+            project_root.clone()
+        };
+        let _ = fs::write(scripts_dir.join("SyncBins.jsx"), SYNC_BINS_SCRIPT);
     }
 
     let should_open = open_project.unwrap_or(true);
@@ -272,6 +376,29 @@ pub fn build_project(
     }
 
     Ok(project_root.to_string_lossy().to_string())
+}
+
+#[tauri::command]
+pub fn open_project_in_premiere(project_path: String) -> Result<(), String> {
+    let path = PathBuf::from(&project_path);
+    if path.is_file() {
+        open::that(&path).map_err(|e| e.to_string())?;
+        return Ok(());
+    }
+    if path.is_dir() {
+        for entry in walkdir::WalkDir::new(&path).into_iter().filter_map(|e| e.ok()) {
+            if entry.file_type().is_file() {
+                if let Some(ext) = entry.path().extension().and_then(|e| e.to_str()) {
+                    if ext.eq_ignore_ascii_case("prproj") {
+                        open::that(entry.path()).map_err(|e| e.to_string())?;
+                        return Ok(());
+                    }
+                }
+            }
+        }
+        open::that(&path).map_err(|e| e.to_string())?;
+    }
+    Ok(())
 }
 
 #[tauri::command]

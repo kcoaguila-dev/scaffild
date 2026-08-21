@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { listen, UnlistenFn } from '@tauri-apps/api/event';
-import { HardDriveDownload, FolderOpen } from 'lucide-react';
+import { HardDriveDownload, FolderOpen, Film, ExternalLink } from 'lucide-react';
 
 interface ProgressEvent {
   file: string;
@@ -84,10 +84,20 @@ export default function MediaIngest() {
     }
   };
 
+  const handleOpenPremiere = async () => {
+    try {
+      if (targetProjectDir) {
+        await invoke('open_project_in_premiere', { projectPath: targetProjectDir });
+      }
+    } catch (e) {
+      console.error('Failed to open Premiere:', e);
+    }
+  };
+
   return (
     <div className="p-6 bg-gray-900 text-white rounded-lg shadow-md max-w-2xl mx-auto mt-8">
       <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-        <HardDriveDownload /> Media Ingest
+        <HardDriveDownload className="text-purple-400" /> Media Ingest
       </h2>
 
       <div className="space-y-4">
@@ -142,14 +152,36 @@ export default function MediaIngest() {
         </button>
 
         {status && (
-          <div className="p-4 bg-gray-800 rounded border border-gray-700">
-            <div className="text-sm mb-2">{status}</div>
+          <div className="p-4 bg-gray-800 rounded border border-gray-700 space-y-3">
+            <div className="text-sm">{status}</div>
             {isIngesting && currentFile && (
               <div className="w-full bg-gray-700 rounded-full h-2.5">
                 <div
                   className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
                   style={{ width: `${fileProgress}%` }}
                 ></div>
+              </div>
+            )}
+
+            {status.includes('complete') && (
+              <div className="p-3.5 bg-purple-950/50 border border-purple-800/70 rounded-md space-y-2 mt-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 font-semibold text-purple-200 text-sm">
+                    <Film size={16} className="text-purple-400" />
+                    <span>Sync with Premiere Pro</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleOpenPremiere}
+                    className="px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white rounded text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-sm"
+                  >
+                    <ExternalLink size={13} />
+                    <span>Open in Premiere</span>
+                  </button>
+                </div>
+                <p className="text-xs text-gray-300 leading-relaxed">
+                  To batch-import your newly ingested media into Premiere bins, run <code className="bg-purple-900/80 px-1.5 py-0.5 rounded text-purple-200 font-mono text-[11px]">SyncBins.jsx</code> inside Premiere (<strong>File &gt; Scripts &gt; Run Script File...</strong> located in your <code className="text-purple-300 font-mono text-[11px]">01_PROJECT_FILES</code> folder).
+                </p>
               </div>
             )}
           </div>
