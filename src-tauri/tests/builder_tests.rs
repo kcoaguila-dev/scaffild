@@ -1,4 +1,4 @@
-﻿use std::collections::HashMap;
+use std::collections::HashMap;
 use tempfile::TempDir;
 use scaffild_lib::builder::{build_project, ProjectParams};
 use scaffild_lib::template::{save_template, Template};
@@ -72,4 +72,7 @@ structure:
     // Check thumbnail rename
     let expected_psd = project_dir.join("04_GRAPHICS/0042_Nike_Summer_Campaign_2026-08-21_Senior_Editor_Thumbnail.psd");
     assert!(expected_psd.exists(), "Renamed .psd should exist");
+
+    // Clean up test template
+    let _ = scaffild_lib::template::delete_template(template_name.to_string());
 }
