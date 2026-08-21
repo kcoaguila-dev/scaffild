@@ -1,7 +1,7 @@
 // SyncBins.jsx
 // Premiere Pro ExtendScript Companion for Scaffild
-// Scans the active project's parent root folder on disk, constructs missing bins,
-// and recursively imports raw media files into 02_FOOTAGE/A_ROLL.
+// Dynamically mirrors ANY disk folder hierarchy into Premiere project bins
+// and automatically imports media files into their respective matching bins.
 
 (function () {
     var logMsg = "";
@@ -21,27 +21,21 @@
         return;
     }
 
-    // Get the parent folder of the project file
     var projFile = new File(proj.path);
     var rootFolder = projFile.parent;
-    log("Root folder: " + rootFolder.fsName);
 
-    // Recursively create bins for folders on disk
-    function syncDirectoryToBin(dir, parentBin) {
-        var files = dir.getFiles();
-        if (!files) return;
-
-        for (var i = 0; i < files.length; i++) {
-            var f = files[i];
-            // If it's a directory (and not hidden/system), create a bin for it
-            if (f instanceof Folder && f.name.indexOf(".") !== 0) {
-                var bin = getOrCreateBin(f.name, parentBin);
-                syncDirectoryToBin(f, bin);
-            }
+    // If the project file is nested inside a subfolder, climb up to find the root project folder
+    if (rootFolder.parent && rootFolder.parent.exists) {
+        var pName = rootFolder.name.toLowerCase();
+        if (pName.indexOf("01_") === 0 || pName.indexOf("project") !== -1 || pName.indexOf("prproj") !== -1 || pName.indexOf("premiere") !== -1) {
+            rootFolder = rootFolder.parent;
         }
     }
 
-    // Helper to find or create a bin inside a parent bin or at root
+    log("Scaffild Root Folder: " + rootFolder.fsName);
+
+    var mediaExts = ["mp4", "mov", "mxf", "avi", "wav", "mp3", "aif", "aac", "jpg", "jpeg", "png", "tif", "tiff", "psd", "ai", "r3d", "braw", "arri"];
+
     function getOrCreateBin(name, parentBin) {
         var items = parentBin ? parentBin.children : app.project.rootItem.children;
         for (var i = 0; i < items.numItems; i++) {
@@ -54,48 +48,36 @@
         return newBin;
     }
 
-    // Recursively scan 02_FOOTAGE/A_ROLL and import media
-    function importMedia(folder, targetBin) {
-        if (!folder.exists) return;
-        var files = folder.getFiles();
+    function syncDirectoryAndMedia(dir, parentBin) {
+        var files = dir.getFiles();
         if (!files) return;
 
-        var filesToImport = [];
+        var mediaToImport = [];
+
         for (var i = 0; i < files.length; i++) {
             var f = files[i];
-            if (f instanceof Folder) {
-                var subBin = getOrCreateBin(f.name, targetBin);
-                importMedia(f, subBin);
-            } else if (f instanceof File) {
+            if (f instanceof Folder && f.name.indexOf(".") !== 0) {
+                var bin = getOrCreateBin(f.name, parentBin);
+                syncDirectoryAndMedia(f, bin);
+            } else if (f instanceof File && f.name.indexOf(".") !== 0) {
                 var ext = f.name.split('.').pop().toLowerCase();
-                // Simple filter for common media extensions
-                var mediaExts = ["mp4", "mov", "mxf", "avi", "wav", "mp3", "jpg", "png", "r3d", "braw"];
                 if (mediaExts.indexOf(ext) !== -1) {
-                    filesToImport.push(f.fsName);
+                    if (ext !== "prproj" && f.name.indexOf("SyncBins") === -1) {
+                        mediaToImport.push(f.fsName);
+                    }
                 }
             }
         }
 
-        if (filesToImport.length > 0) {
-            app.project.importFiles(filesToImport, false, targetBin, false);
-            log("Imported " + filesToImport.length + " files into " + targetBin.name);
+        if (mediaToImport.length > 0) {
+            var target = parentBin || app.project.rootItem;
+            app.project.importFiles(mediaToImport, false, target, false);
+            log("Imported " + mediaToImport.length + " files into bin: " + (parentBin ? parentBin.name : "Root"));
         }
     }
 
-    // 1. Sync entire directory structure to bins
     app.enableQE();
-    syncDirectoryToBin(rootFolder, null);
-
-    // 2. Import footage into 02_FOOTAGE/A_ROLL
-    var aRollFolder = new Folder(rootFolder.fsName + "/02_FOOTAGE/A_ROLL");
-    if (aRollFolder.exists) {
-        // Find or create 02_FOOTAGE bin
-        var footageBin = getOrCreateBin("02_FOOTAGE", null);
-        var aRollBin = getOrCreateBin("A_ROLL", footageBin);
-        importMedia(aRollFolder, aRollBin);
-    } else {
-        log("No 02_FOOTAGE/A_ROLL folder found.");
-    }
+    syncDirectoryAndMedia(rootFolder, null);
 
     alert("Sync complete.\n\n" + logMsg);
 })();

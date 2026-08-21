@@ -228,8 +228,8 @@ fn build_structure(
 
 const SYNC_BINS_SCRIPT: &str = r#"// SyncBins.jsx
 // Premiere Pro ExtendScript Companion for Scaffild
-// Scans the active project's parent root folder on disk, constructs missing bins,
-// and recursively imports raw media files into 02_FOOTAGE/A_ROLL.
+// Dynamically mirrors ANY disk folder hierarchy into Premiere project bins
+// and automatically imports media files into their respective matching bins.
 
 (function () {
     var logMsg = "";
@@ -251,20 +251,18 @@ const SYNC_BINS_SCRIPT: &str = r#"// SyncBins.jsx
 
     var projFile = new File(proj.path);
     var rootFolder = projFile.parent;
-    log("Root folder: " + rootFolder.fsName);
 
-    function syncDirectoryToBin(dir, parentBin) {
-        var files = dir.getFiles();
-        if (!files) return;
-
-        for (var i = 0; i < files.length; i++) {
-            var f = files[i];
-            if (f instanceof Folder && f.name.indexOf(".") !== 0) {
-                var bin = getOrCreateBin(f.name, parentBin);
-                syncDirectoryToBin(f, bin);
-            }
+    // If the project file is nested inside a subfolder, climb up to find the root project folder
+    if (rootFolder.parent && rootFolder.parent.exists) {
+        var pName = rootFolder.name.toLowerCase();
+        if (pName.indexOf("01_") === 0 || pName.indexOf("project") !== -1 || pName.indexOf("prproj") !== -1 || pName.indexOf("premiere") !== -1) {
+            rootFolder = rootFolder.parent;
         }
     }
+
+    log("Scaffild Root Folder: " + rootFolder.fsName);
+
+    var mediaExts = ["mp4", "mov", "mxf", "avi", "wav", "mp3", "aif", "aac", "jpg", "jpeg", "png", "tif", "tiff", "psd", "ai", "r3d", "braw", "arri"];
 
     function getOrCreateBin(name, parentBin) {
         var items = parentBin ? parentBin.children : app.project.rootItem.children;
@@ -278,43 +276,36 @@ const SYNC_BINS_SCRIPT: &str = r#"// SyncBins.jsx
         return newBin;
     }
 
-    function importMedia(folder, targetBin) {
-        if (!folder.exists) return;
-        var files = folder.getFiles();
+    function syncDirectoryAndMedia(dir, parentBin) {
+        var files = dir.getFiles();
         if (!files) return;
 
-        var filesToImport = [];
+        var mediaToImport = [];
+
         for (var i = 0; i < files.length; i++) {
             var f = files[i];
-            if (f instanceof Folder) {
-                var subBin = getOrCreateBin(f.name, targetBin);
-                importMedia(f, subBin);
-            } else if (f instanceof File) {
+            if (f instanceof Folder && f.name.indexOf(".") !== 0) {
+                var bin = getOrCreateBin(f.name, parentBin);
+                syncDirectoryAndMedia(f, bin);
+            } else if (f instanceof File && f.name.indexOf(".") !== 0) {
                 var ext = f.name.split('.').pop().toLowerCase();
-                var mediaExts = ["mp4", "mov", "mxf", "avi", "wav", "mp3", "jpg", "png", "r3d", "braw"];
                 if (mediaExts.indexOf(ext) !== -1) {
-                    filesToImport.push(f.fsName);
+                    if (ext !== "prproj" && f.name.indexOf("SyncBins") === -1) {
+                        mediaToImport.push(f.fsName);
+                    }
                 }
             }
         }
 
-        if (filesToImport.length > 0) {
-            app.project.importFiles(filesToImport, false, targetBin, false);
-            log("Imported " + filesToImport.length + " files into " + targetBin.name);
+        if (mediaToImport.length > 0) {
+            var target = parentBin || app.project.rootItem;
+            app.project.importFiles(mediaToImport, false, target, false);
+            log("Imported " + mediaToImport.length + " files into bin: " + (parentBin ? parentBin.name : "Root"));
         }
     }
 
     app.enableQE();
-    syncDirectoryToBin(rootFolder, null);
-
-    var aRollFolder = new Folder(rootFolder.fsName + "/02_FOOTAGE/A_ROLL");
-    if (aRollFolder.exists) {
-        var footageBin = getOrCreateBin("02_FOOTAGE", null);
-        var aRollBin = getOrCreateBin("A_ROLL", footageBin);
-        importMedia(aRollFolder, aRollBin);
-    } else {
-        log("No 02_FOOTAGE/A_ROLL folder found.");
-    }
+    syncDirectoryAndMedia(rootFolder, null);
 
     alert("Sync complete.\n\n" + logMsg);
 })();
@@ -346,12 +337,21 @@ pub fn build_project(
     }
 
     if include_sync_bins.unwrap_or(true) {
-        let scripts_dir = if project_root.join("01_PROJECT_FILES").exists() {
-            project_root.join("01_PROJECT_FILES")
-        } else {
-            project_root.clone()
-        };
-        let _ = fs::write(scripts_dir.join("SyncBins.jsx"), SYNC_BINS_SCRIPT);
+        // Dynamically find where the primary project file (.prproj, .aep, etc.) is located in the tree
+        let mut target_script_dir = project_root.clone();
+        for entry in walkdir::WalkDir::new(&project_root).into_iter().filter_map(|e| e.ok()) {
+            if entry.file_type().is_file() {
+                if let Some(ext) = entry.path().extension().and_then(|e| e.to_str()) {
+                    if ext.eq_ignore_ascii_case("prproj") || ext.eq_ignore_ascii_case("aep") {
+                        if let Some(parent) = entry.path().parent() {
+                            target_script_dir = parent.to_path_buf();
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        let _ = fs::write(target_script_dir.join("SyncBins.jsx"), SYNC_BINS_SCRIPT);
     }
 
     let should_open = open_project.unwrap_or(true);

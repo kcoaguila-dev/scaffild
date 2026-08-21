@@ -180,7 +180,7 @@ export default function MediaIngest() {
                   </button>
                 </div>
                 <p className="text-xs text-gray-300 leading-relaxed">
-                  To batch-import your newly ingested media into Premiere bins, run <code className="bg-purple-900/80 px-1.5 py-0.5 rounded text-purple-200 font-mono text-[11px]">SyncBins.jsx</code> inside Premiere (<strong>File &gt; Scripts &gt; Run Script File...</strong> located in your <code className="text-purple-300 font-mono text-[11px]">01_PROJECT_FILES</code> folder).
+                  To batch-import your newly ingested media into Premiere bins, run <code className="bg-purple-900/80 px-1.5 py-0.5 rounded text-purple-200 font-mono text-[11px]">SyncBins.jsx</code> inside Premiere (<strong>File &gt; Scripts &gt; Run Script File...</strong> located next to your project file).
                 </p>
               </div>
             )}
