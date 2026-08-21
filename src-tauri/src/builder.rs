@@ -33,6 +33,8 @@ fn replace_tokens(text: &str, params: &ProjectParams) -> String {
 
     result = result.replace("[project]", &project_composite);
     result = result.replace("{{project}}", &project_composite);
+    result = result.replace("_PROJECT_TEMPLATE", &project_composite);
+    result = result.replace("PROJECT_TEMPLATE", &project_composite);
 
     for (key, val) in &params.params {
         let token = format!("{{{{{}}}}}", key);
