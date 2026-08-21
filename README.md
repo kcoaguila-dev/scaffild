@@ -1,4 +1,4 @@
-# Scaffild 🎬⚡
+﻿# Scaffild
 
 <div align="center">
   <img src="public/logo.jpg" alt="Scaffild Logo" width="480" style="border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);" />
@@ -19,7 +19,7 @@ Instantly scaffold standardized project folders, clone pre-configured Premiere P
 
 ---
 
-## 📥 Download & Installation
+## Download & Installation
 
 Ready-to-install release binaries are packaged in `dist-installers/` and available under **[GitHub Releases](https://github.com/kcoaguila-dev/scaffild/releases)**:
 
@@ -31,7 +31,7 @@ Ready-to-install release binaries are packaged in `dist-installers/` and availab
 
 ---
 
-## 🏗️ System Architecture
+## System Architecture
 
 ```mermaid
 graph TD
@@ -41,22 +41,22 @@ graph TD
     classDef output fill:#134e4a,stroke:#14b8a6,stroke-width:1px,color:#ccfbf1;
 
     subgraph INGRESS["1. Ingress Layer (Interfaces)"]
-        UI["🖥️ Desktop GUI (React 19 + TypeScript)"]:::client
-        AI["🤖 AI Agents (Claude Desktop / Cursor MCP)"]:::client
-        CLI["💻 Headless CLI (scaffild CLI)"]:::client
+        UI["Desktop GUI (React 19 + TypeScript)"]:::client
+        AI["AI Agents (Claude Desktop / Cursor MCP)"]:::client
+        CLI["Headless CLI (scaffild CLI)"]:::client
     end
 
     subgraph CORE["2. Engine Core (Rust + Tauri v2)"]
-        ROUTER["⚡ Command & Protocol Router"]:::core
-        MCP["🤖 MCP Server (JSON-RPC stdio)"]:::engine
-        SCAFFOLD["📁 Template & Asset Builder"]:::engine
-        DIT["⚡ Dual xxHash64 Ingest Engine"]:::engine
+        ROUTER["Command & Protocol Router"]:::core
+        MCP["MCP Server (JSON-RPC stdio)"]:::engine
+        SCAFFOLD["Template & Asset Builder"]:::engine
+        DIT["Dual xxHash64 Ingest Engine"]:::engine
     end
 
     subgraph EGRESS["3. Outputs & Ecosystem"]
-        FILES["📁 Structured Project Directories & Cloned Masters"]:::output
-        STORAGE["💾 3-2-1 Dual Checksum Backup (SSD + HDD)"]:::output
-        PREMIERE["🎬 Adobe Premiere Pro (SyncBins.jsx & Sequences)"]:::output
+        FILES["Structured Project Directories & Cloned Masters"]:::output
+        STORAGE["3-2-1 Dual Checksum Backup (SSD + HDD)"]:::output
+        PREMIERE["Adobe Premiere Pro (SyncBins.jsx & Sequences)"]:::output
     end
 
     UI --> ROUTER
@@ -80,29 +80,29 @@ graph TD
 
 ---
 
-## ✨ Key Capabilities
+## Key Capabilities
 
-### 1. 🎬 Dedicated 16:9 & 9:16 Social Master Templates
+### 1. Dedicated 16:9 & 9:16 Social Master Templates
 * **`Horizontal_Video`** *(16:9 YouTube / Commercial / Narrative)*: Includes master 16:9 `.prproj`, `00_SELECTS_PULL` pancake timeline, `01_MAIN_MASTER_16x9`, and 16:9 Photoshop thumbnail (`[project]_Thumbnail.psd`).
-* **`Social_Vertical_Reels_Shorts`** *(9:16 TikTok / Instagram Reels / YouTube Shorts)*: Includes true `1080×1920` portrait `.prproj` timeline, `00_SELECTS_VERTICAL`, `01_MASTER_REEL_9x16`, and 9:16 Photoshop cover with Instagram safe-zone guides.
+* **`Social_Vertical_Reels_Shorts`** *(9:16 TikTok / Instagram Reels / YouTube Shorts)*: Includes true `1080x1920` portrait `.prproj` timeline, `00_SELECTS_VERTICAL`, `01_MASTER_REEL_9x16`, and 9:16 Photoshop cover with Instagram safe-zone guides.
 * **`MultiFormat_Campaign`** *(Hybrid Commercial Suite)*: Includes both 16:9 longform and 9:16 cutdown timelines.
 
-### 2. ⚡ 3-2-1 Checksum Media Offloader (DIT Grade)
+### 2. 3-2-1 Checksum Media Offloader (DIT Grade)
 * **Parallel Multi-Threaded I/O**: Stream camera cards to NVMe working drives and backup HDDs simultaneously.
 * **`xxHash64` Hardware Checksums**: Verifies bit-for-bit integrity and generates an industry-standard `checksum_manifest.txt`.
-* **Audio Completion Chime**: Web Audio synthesized audio notification upon completion.
+* **Audio Completion Notification**: Synthesized audio cue upon verification completion.
 
-### 3. 🔌 Dynamic Premiere Bin Sync (`SyncBins.jsx`)
+### 3. Dynamic Premiere Bin Sync (`SyncBins.jsx`)
 * Automatically placed inside `01_PROJECT_FILES/` alongside your `.prproj`.
 * In Premiere (**File > Scripts > Run Script File...**), mirrors all disk folders into bins and imports footage into matching bins.
 * Automatically organizes timelines into a clean `00_SEQUENCES` bin.
 
-### 4. 🤖 Built-in AI Agent Server (Model Context Protocol - MCP)
+### 4. Built-in AI Agent Server (Model Context Protocol - MCP)
 Connect **Claude Desktop**, **Cursor**, or **Antigravity** to Scaffild:
 * AI Agents can autonomously list templates, scaffold project directories, and ingest camera cards using natural language.
 * Access setup instructions in **Tools > AI Agent (MCP) Setup...**.
 
-### 5. 💻 Headless Terminal CLI
+### 5. Headless Terminal CLI
 ```bash
 # Start MCP server for AI Agents
 scaffild mcp
@@ -119,7 +119,7 @@ scaffild ingest --source "E:\DCIM" --primary "D:\Projects\Footage" --secondary "
 
 ---
 
-## 🧪 Comprehensive Test Suite & Quality Assurance
+## Quality Assurance & Test Suite
 
 Scaffild includes a multi-layered testing suite covering unit, integration, and end-to-end tests:
 
@@ -145,6 +145,6 @@ npm run tauri build
 
 ---
 
-## 📄 License
+## License
 
 Distributed under the [MIT License](LICENSE).

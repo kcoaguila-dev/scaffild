@@ -1,4 +1,4 @@
-﻿name: CI Test Suite
+name: CI Test Suite
 
 on:
   push:
@@ -32,5 +32,4 @@ jobs:
         run: npm run build
 
       - name: Run Rust Tests (Unit, Integration & E2E)
-        working-directory: ./src-tauri
-        run: cargo test --verbose
+        run: cargo test --manifest-path src-tauri/Cargo.toml --verbose

@@ -1,4 +1,4 @@
-﻿name: Release Scaffild
+name: Release Scaffild
 
 on:
   push:
@@ -41,7 +41,7 @@ jobs:
           tagName: ${{ github.ref_name }}
           releaseName: 'Scaffild ${{ github.ref_name }}'
           releaseBody: |
-            ## Scaffild Production Release 🚀
+            ## Scaffild Production Release
             
             ### Included in this release:
             - **Windows Setup Wizard (`.exe`)**: Automatic installation with desktop shortcut.
