@@ -1,5 +1,7 @@
 pub mod builder;
+pub mod cli;
 pub mod ingest;
+pub mod mcp;
 pub mod template;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]

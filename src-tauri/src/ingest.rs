@@ -1,4 +1,4 @@
-use std::fs;
+﻿use std::fs;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
@@ -16,21 +16,21 @@ pub struct ProgressEvent {
     pub status: String,
 }
 
-#[derive(Clone, serde::Serialize)]
+#[derive(Clone, serde::Serialize, serde::Deserialize)]
 pub struct IngestSummary {
     pub total_files: usize,
     pub total_bytes: u64,
     pub verified_checksums: usize,
+    pub primary_path: String,
+    pub secondary_path: Option<String>,
 }
 
-fn resolve_destination_folder(base: &str) -> PathBuf {
+pub fn resolve_destination_folder(base: &str) -> PathBuf {
     let p = PathBuf::from(base);
-    // If the folder already ends with or contains footage/media, use it directly
     let name_lower = p.file_name().map(|s| s.to_string_lossy().to_lowercase()).unwrap_or_default();
     if name_lower.contains("footage") || name_lower.contains("media") || name_lower.contains("raw") {
         return p;
     }
-    // Check if 02_FOOTAGE/A_ROLL or 02_FOOTAGE exists inside
     if p.join("02_FOOTAGE").join("A_ROLL").exists() {
         return p.join("02_FOOTAGE").join("A_ROLL");
     }
@@ -40,11 +40,11 @@ fn resolve_destination_folder(base: &str) -> PathBuf {
     p.join("02_FOOTAGE").join("A_ROLL")
 }
 
-fn copy_and_hash_dual(
+pub fn copy_and_hash_dual(
     src: &Path,
     dest1: &Path,
     dest2: Option<&Path>,
-    app: &AppHandle,
+    app: Option<&AppHandle>,
     file_name: &str,
     total_size: u64,
 ) -> Result<String, String> {
@@ -74,13 +74,15 @@ fn copy_and_hash_dual(
 
         bytes_copied += n as u64;
 
-        if bytes_copied % (32 * 1024 * 1024) == 0 || bytes_copied == total_size {
-            let _ = app.emit("ingest-progress", ProgressEvent {
-                file: file_name.to_string(),
-                bytes_copied,
-                total_bytes: total_size,
-                status: "copying".into(),
-            });
+        if let Some(app_handle) = app {
+            if bytes_copied % (32 * 1024 * 1024) == 0 || bytes_copied == total_size {
+                let _ = app_handle.emit("ingest-progress", ProgressEvent {
+                    file: file_name.to_string(),
+                    bytes_copied,
+                    total_bytes: total_size,
+                    status: "copying".into(),
+                });
+            }
         }
     }
 
@@ -117,6 +119,119 @@ fn copy_and_hash_dual(
     Ok(src_hash)
 }
 
+pub fn ingest_media_core(
+    source_dir: String,
+    target_project_dir: String,
+    secondary_target_dir: Option<String>,
+    app: Option<&AppHandle>,
+) -> Result<IngestSummary, String> {
+    let src_path = PathBuf::from(&source_dir);
+    if !src_path.exists() {
+        return Err(format!("Source directory does not exist: {}", source_dir));
+    }
+
+    let dest1_base = resolve_destination_folder(&target_project_dir);
+    if !dest1_base.exists() {
+        fs::create_dir_all(&dest1_base).map_err(|e| e.to_string())?;
+    }
+
+    let dest2_base = secondary_target_dir.as_ref().map(|s| {
+        let p = resolve_destination_folder(s);
+        let _ = fs::create_dir_all(&p);
+        p
+    });
+
+    let manifest = Mutex::new(String::new());
+    let walker = WalkDir::new(&src_path).into_iter();
+    let entries: Vec<_> = walker.filter_map(|e| e.ok()).filter(|e| e.file_type().is_file()).collect();
+
+    let total_files = entries.len();
+    let mut total_bytes: u64 = 0;
+    for entry in &entries {
+        total_bytes += entry.metadata().map(|m| m.len()).unwrap_or(0);
+    }
+
+    // Process files in parallel
+    entries.par_iter().try_for_each(|entry| -> Result<(), String> {
+        let relative_path = entry.path().strip_prefix(&src_path).unwrap();
+        let dest1_path = dest1_base.join(relative_path);
+        let dest2_path = dest2_base.as_ref().map(|b| b.join(relative_path));
+
+        if let Some(parent) = dest1_path.parent() {
+            let _ = fs::create_dir_all(parent);
+        }
+        if let Some(ref d2_p) = dest2_path {
+            if let Some(parent) = d2_p.parent() {
+                let _ = fs::create_dir_all(parent);
+            }
+        }
+
+        let file_name = entry.file_name().to_string_lossy().to_string();
+        let file_size = entry.metadata().map(|m| m.len()).unwrap_or(0);
+
+        if let Some(app_handle) = app {
+            let _ = app_handle.emit("ingest-progress", ProgressEvent {
+                file: file_name.clone(),
+                bytes_copied: 0,
+                total_bytes: file_size,
+                status: "copying".into(),
+            });
+        }
+
+        match copy_and_hash_dual(
+            entry.path(),
+            &dest1_path,
+            dest2_path.as_deref(),
+            app,
+            &file_name,
+            file_size,
+        ) {
+            Ok(hash) => {
+                let mut m = manifest.lock().unwrap();
+                m.push_str(&format!("{} {}\n", hash, relative_path.display()));
+
+                if let Some(app_handle) = app {
+                    let _ = app_handle.emit("ingest-progress", ProgressEvent {
+                        file: file_name.clone(),
+                        bytes_copied: file_size,
+                        total_bytes: file_size,
+                        status: "done".into(),
+                    });
+                }
+                Ok(())
+            }
+            Err(err) => {
+                if let Some(app_handle) = app {
+                    let _ = app_handle.emit("ingest-progress", ProgressEvent {
+                        file: file_name.clone(),
+                        bytes_copied: file_size,
+                        total_bytes: file_size,
+                        status: "error".into(),
+                    });
+                }
+                Err(err)
+            }
+        }
+    })?;
+
+    let final_manifest = manifest.into_inner().unwrap();
+    let manifest_path1 = dest1_base.join("checksum_manifest.txt");
+    let _ = fs::write(manifest_path1, &final_manifest);
+
+    if let Some(ref d2_b) = dest2_base {
+        let manifest_path2 = d2_b.join("checksum_manifest.txt");
+        let _ = fs::write(manifest_path2, &final_manifest);
+    }
+
+    Ok(IngestSummary {
+        total_files,
+        total_bytes,
+        verified_checksums: total_files,
+        primary_path: dest1_base.to_string_lossy().to_string(),
+        secondary_path: dest2_base.map(|b| b.to_string_lossy().to_string()),
+    })
+}
+
 #[tauri::command]
 pub async fn ingest_media(
     app: AppHandle,
@@ -125,102 +240,7 @@ pub async fn ingest_media(
     secondary_target_dir: Option<String>,
 ) -> Result<IngestSummary, String> {
     let app_handle = app.clone();
-
     tauri::async_runtime::spawn_blocking(move || {
-        let src_path = PathBuf::from(&source_dir);
-        let dest1_base = resolve_destination_folder(&target_project_dir);
-
-        if !dest1_base.exists() {
-            fs::create_dir_all(&dest1_base).map_err(|e| e.to_string())?;
-        }
-
-        let dest2_base = secondary_target_dir.as_ref().map(|s| {
-            let p = resolve_destination_folder(s);
-            let _ = fs::create_dir_all(&p);
-            p
-        });
-
-        let manifest = Mutex::new(String::new());
-
-        let walker = WalkDir::new(&src_path).into_iter();
-        let entries: Vec<_> = walker.filter_map(|e| e.ok()).filter(|e| e.file_type().is_file()).collect();
-
-        let total_files = entries.len();
-        let mut total_bytes: u64 = 0;
-        for entry in &entries {
-            total_bytes += entry.metadata().map(|m| m.len()).unwrap_or(0);
-        }
-
-        // Process files in parallel
-        entries.par_iter().try_for_each(|entry| -> Result<(), String> {
-            let relative_path = entry.path().strip_prefix(&src_path).unwrap();
-            let dest1_path = dest1_base.join(relative_path);
-            let dest2_path = dest2_base.as_ref().map(|b| b.join(relative_path));
-
-            if let Some(parent) = dest1_path.parent() {
-                let _ = fs::create_dir_all(parent);
-            }
-            if let Some(ref d2_p) = dest2_path {
-                if let Some(parent) = d2_p.parent() {
-                    let _ = fs::create_dir_all(parent);
-                }
-            }
-
-            let file_name = entry.file_name().to_string_lossy().to_string();
-            let file_size = entry.metadata().map(|m| m.len()).unwrap_or(0);
-
-            let _ = app_handle.emit("ingest-progress", ProgressEvent {
-                file: file_name.clone(),
-                bytes_copied: 0,
-                total_bytes: file_size,
-                status: "copying".into(),
-            });
-
-            match copy_and_hash_dual(
-                entry.path(),
-                &dest1_path,
-                dest2_path.as_deref(),
-                &app_handle,
-                &file_name,
-                file_size,
-            ) {
-                Ok(hash) => {
-                    let mut m = manifest.lock().unwrap();
-                    m.push_str(&format!("{} {}\n", hash, relative_path.display()));
-
-                    let _ = app_handle.emit("ingest-progress", ProgressEvent {
-                        file: file_name.clone(),
-                        bytes_copied: file_size,
-                        total_bytes: file_size,
-                        status: "done".into(),
-                    });
-                    Ok(())
-                }
-                Err(err) => {
-                    let _ = app_handle.emit("ingest-progress", ProgressEvent {
-                        file: file_name.clone(),
-                        bytes_copied: file_size,
-                        total_bytes: file_size,
-                        status: "error".into(),
-                    });
-                    Err(err)
-                }
-            }
-        })?;
-
-        let final_manifest = manifest.into_inner().unwrap();
-        let manifest_path1 = dest1_base.join("checksum_manifest.txt");
-        let _ = fs::write(manifest_path1, &final_manifest);
-
-        if let Some(ref d2_b) = dest2_base {
-            let manifest_path2 = d2_b.join("checksum_manifest.txt");
-            let _ = fs::write(manifest_path2, &final_manifest);
-        }
-
-        Ok(IngestSummary {
-            total_files,
-            total_bytes,
-            verified_checksums: total_files,
-        })
+        ingest_media_core(source_dir, target_project_dir, secondary_target_dir, Some(&app_handle))
     }).await.map_err(|e| e.to_string())?
 }

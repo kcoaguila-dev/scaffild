@@ -13,6 +13,7 @@ interface MenuBarProps {
   onSelectTab: (tab: 'build' | 'templates' | 'ingest') => void;
   onOpenShortcuts: () => void;
   onOpenAbout: () => void;
+  onOpenMcpSetup?: () => void;
   onBrowseTargetDir?: () => void;
   recentProjects: RecentProjectItem[];
   onClearRecentProjects: () => void;
@@ -23,6 +24,7 @@ export default function MenuBar({
   onSelectTab,
   onOpenShortcuts,
   onOpenAbout,
+  onOpenMcpSetup,
   onBrowseTargetDir,
   recentProjects,
   onClearRecentProjects,
@@ -263,6 +265,21 @@ export default function MenuBar({
               <span>Open Projects Folder</span>
               <ExternalLink size={12} className="text-gray-400" />
             </div>
+            {onOpenMcpSetup && (
+              <>
+                <div className="border-t border-gray-800 my-1"></div>
+                <div
+                  onClick={() => {
+                    setOpenMenu(null);
+                    onOpenMcpSetup();
+                  }}
+                  className="px-3 py-1.5 hover:bg-purple-600 hover:text-white flex items-center justify-between cursor-pointer text-purple-300 font-medium"
+                >
+                  <span>AI Agent (MCP) Setup...</span>
+                  <span className="text-[10px] bg-purple-900/60 text-purple-200 px-1 rounded">MCP</span>
+                </div>
+              </>
+            )}
           </div>
         )}
       </div>

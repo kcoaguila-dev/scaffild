@@ -5,6 +5,7 @@ import MediaIngest from './MediaIngest';
 import MenuBar, { RecentProjectItem } from './MenuBar';
 import ShortcutsModal from './ShortcutsModal';
 import AboutModal from './AboutModal';
+import McpSetupModal from './McpSetupModal';
 import { Film } from 'lucide-react';
 import { invoke } from '@tauri-apps/api/core';
 
@@ -13,6 +14,7 @@ function App() {
   const [preselectedIngestDir, setPreselectedIngestDir] = useState<string>('');
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
+  const [isMcpSetupOpen, setIsMcpSetupOpen] = useState(false);
   const [recentProjects, setRecentProjects] = useState<RecentProjectItem[]>(() => {
     try {
       const saved = localStorage.getItem('scaffild_recent_projects');
@@ -85,6 +87,7 @@ function App() {
         onSelectTab={setActiveTab}
         onOpenShortcuts={() => setIsShortcutsOpen(true)}
         onOpenAbout={() => setIsAboutOpen(true)}
+        onOpenMcpSetup={() => setIsMcpSetupOpen(true)}
         onBrowseTargetDir={handleBrowseTargetDir}
         recentProjects={recentProjects}
         onClearRecentProjects={handleClearRecentProjects}
@@ -141,6 +144,7 @@ function App() {
       {/* Modals */}
       <ShortcutsModal isOpen={isShortcutsOpen} onClose={() => setIsShortcutsOpen(false)} />
       <AboutModal isOpen={isAboutOpen} onClose={() => setIsAboutOpen(false)} />
+      <McpSetupModal isOpen={isMcpSetupOpen} onClose={() => setIsMcpSetupOpen(false)} />
     </div>
   );
 }
