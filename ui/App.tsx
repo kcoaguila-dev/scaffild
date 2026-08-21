@@ -6,7 +6,7 @@ import MenuBar, { RecentProjectItem } from './MenuBar';
 import ShortcutsModal from './ShortcutsModal';
 import AboutModal from './AboutModal';
 import McpSetupModal from './McpSetupModal';
-import { Film } from 'lucide-react';
+import ScaffildLogo from './ScaffildLogo';
 import { invoke } from '@tauri-apps/api/core';
 
 function App() {
@@ -97,9 +97,9 @@ function App() {
       {/* Main App Header with Tabs */}
       <header className="bg-gray-900 border-b border-gray-800 px-4 py-2 flex items-center justify-between">
         <div className="flex items-center gap-6">
-          <div className="flex items-center gap-2 text-base font-bold text-white tracking-wide select-none">
-            <Film className="text-blue-500" size={18} />
-            <span>Scaffild</span>
+          <div className="flex items-center gap-2.5 text-base font-bold text-white tracking-wide select-none">
+            <ScaffildLogo size={20} />
+            <span className="bg-gradient-to-r from-white via-gray-100 to-gray-300 bg-clip-text text-transparent">Scaffild</span>
           </div>
           <nav className="flex items-center gap-1.5">
             <button

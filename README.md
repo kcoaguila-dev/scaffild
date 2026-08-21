@@ -1,5 +1,11 @@
 # Scaffild 🎬⚡
 
+<div align="center">
+  <img src="public/logo.jpg" alt="Scaffild Logo" width="480" style="border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);" />
+</div>
+
+<br />
+
 [![CI Test Suite](https://github.com/kcoaguila-dev/scaffild/actions/workflows/test.yml/badge.svg)](https://github.com/kcoaguila-dev/scaffild/actions/workflows/test.yml)
 [![Release](https://img.shields.io/badge/Release-v0.1.0-blue.svg)](https://github.com/kcoaguila-dev/scaffild/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)

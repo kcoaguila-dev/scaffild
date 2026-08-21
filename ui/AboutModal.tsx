@@ -1,4 +1,5 @@
-import { X, Film } from 'lucide-react';
+import { X } from 'lucide-react';
+import ScaffildLogo from './ScaffildLogo';
 
 interface AboutModalProps {
   isOpen: boolean;
@@ -20,8 +21,8 @@ export default function AboutModal({ isOpen, onClose }: AboutModalProps) {
           </button>
         </div>
 
-        <div className="inline-flex p-3 bg-blue-600/20 text-blue-400 rounded-full">
-          <Film size={36} />
+        <div className="inline-flex p-3 bg-gradient-to-tr from-cyan-950/40 via-blue-900/30 to-purple-950/40 border border-cyan-500/30 rounded-2xl shadow-lg">
+          <ScaffildLogo size={44} />
         </div>
 
         <div>
