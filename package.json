@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "test": "node ./node_modules/vitest/vitest.mjs run",
+    "test": "vitest run",
     "tauri": "tauri"
   },
   "dependencies": {

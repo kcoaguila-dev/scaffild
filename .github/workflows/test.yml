@@ -31,5 +31,8 @@ jobs:
       - name: Build Frontend (Vite & TypeScript)
         run: npm run build
 
-      - name: Run Rust Tests (Unit, Integration & E2E)
-        run: cargo test --manifest-path src-tauri/Cargo.toml --verbose -- --test-threads=1 --nocapture
+      - name: Run Rust Type Check (Cargo Check)
+        run: cargo check --manifest-path src-tauri/Cargo.toml
+
+      - name: Run Rust Unit & Integration Tests (Cargo Test)
+        run: cargo test --manifest-path src-tauri/Cargo.toml -- --test-threads=1
