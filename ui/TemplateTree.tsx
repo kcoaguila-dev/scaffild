@@ -65,9 +65,9 @@ export function isFileItem(name: string): boolean {
 export function ItemIcon({ name, isFolder, expanded }: { name: string; isFolder: boolean; expanded?: boolean }) {
   if (isFolder) {
     return expanded ? (
-      <FolderOpen size={18} className="text-amber-400 shrink-0" />
+      <FolderOpen size={16} className="text-amber-400 shrink-0" />
     ) : (
-      <Folder size={18} className="text-amber-400 shrink-0" />
+      <Folder size={16} className="text-amber-400 shrink-0" />
     );
   }
 
@@ -76,25 +76,25 @@ export function ItemIcon({ name, isFolder, expanded }: { name: string; isFolder:
   switch (ext) {
     case 'prproj':
       return (
-        <span className="w-4 h-4 rounded bg-[#330033] text-[#EA77FF] border border-[#EA77FF]/50 text-[9px] font-black flex items-center justify-center shrink-0" title="Premiere Pro Project">
+        <span className="w-5 h-5 rounded bg-[#2a002e] text-[#ea77ff] border border-[#ea77ff]/60 text-[10px] font-bold flex items-center justify-center shrink-0 tracking-tighter" title="Premiere Pro Project">
           Pr
         </span>
       );
     case 'psd':
       return (
-        <span className="w-4 h-4 rounded bg-[#001E36] text-[#31A8FF] border border-[#31A8FF]/50 text-[9px] font-black flex items-center justify-center shrink-0" title="Photoshop File">
+        <span className="w-5 h-5 rounded bg-[#001d36] text-[#31a8ff] border border-[#31a8ff]/60 text-[10px] font-bold flex items-center justify-center shrink-0 tracking-tighter" title="Photoshop File">
           Ps
         </span>
       );
     case 'aep':
       return (
-        <span className="w-4 h-4 rounded bg-[#00005B] text-[#9999FF] border border-[#9999FF]/50 text-[9px] font-black flex items-center justify-center shrink-0" title="After Effects Project">
+        <span className="w-5 h-5 rounded bg-[#00004d] text-[#9999ff] border border-[#9999ff]/60 text-[10px] font-bold flex items-center justify-center shrink-0 tracking-tighter" title="After Effects Project">
           Ae
         </span>
       );
     case 'ai':
       return (
-        <span className="w-4 h-4 rounded bg-[#330000] text-[#FF9A00] border border-[#FF9A00]/50 text-[9px] font-black flex items-center justify-center shrink-0" title="Illustrator File">
+        <span className="w-5 h-5 rounded bg-[#2b1600] text-[#ff9a00] border border-[#ff9a00]/60 text-[10px] font-bold flex items-center justify-center shrink-0 tracking-tighter" title="Illustrator File">
           Ai
         </span>
       );
@@ -183,10 +183,10 @@ export default function TemplateTree({ structure, parameters, onChange, onImport
   };
 
   return (
-    <div className="bg-gray-800 rounded p-4 border border-gray-700 flex flex-col h-full">
-      <div className="flex-grow overflow-y-auto min-h-[300px] max-h-[500px]">
+    <div className="flex flex-col h-full w-full">
+      <div className="flex-grow overflow-y-auto p-3">
         {nodes.length === 0 ? (
-          <div className="text-gray-400 my-8 text-center text-sm">
+          <div className="text-gray-400 my-16 text-center text-xs italic">
             No folders or files in this template. Click "Add" below to start.
           </div>
         ) : (
@@ -203,13 +203,13 @@ export default function TemplateTree({ structure, parameters, onChange, onImport
       </div>
 
       {/* Post Haste Style Bottom Bar: Add & Remove */}
-      <div className="flex items-center gap-2 pt-3 border-t border-gray-700 mt-2 relative">
+      <div className="bg-gray-850 px-3 py-2 border-t border-gray-700 flex items-center gap-2 mt-auto relative">
         <div className="relative" ref={addMenuRef}>
           <button
             onClick={() => setShowAddMenu(!showAddMenu)}
-            className="flex items-center gap-1.5 bg-gray-700 hover:bg-gray-600 px-3 py-1.5 rounded text-xs text-white font-semibold transition-colors border border-gray-600 shadow-sm"
+            className="bg-gray-700 hover:bg-gray-600 text-white text-xs font-semibold py-1.5 px-3 rounded transition-colors border border-gray-600 flex items-center justify-center gap-1.5 shadow-sm"
           >
-            <Plus size={14} /> Add <ChevronDown size={12} />
+            <Plus size={13} /> Add <ChevronDown size={11} />
           </button>
 
           {showAddMenu && (
@@ -237,7 +237,7 @@ export default function TemplateTree({ structure, parameters, onChange, onImport
                     }}
                     className="w-full text-left px-3 py-1.5 hover:bg-purple-600 hover:text-white flex items-center gap-2 text-purple-300 font-medium transition-colors"
                   >
-                    <Upload size={14} />
+                    <Upload size={13} />
                     <span>Import Folder Structure...</span>
                   </button>
                 </>
@@ -249,7 +249,7 @@ export default function TemplateTree({ structure, parameters, onChange, onImport
         <button
           onClick={handleRemoveSelected}
           disabled={!selectedNodeId}
-          className={`px-3 py-1.5 rounded text-xs font-semibold transition-colors border flex items-center gap-1 ${
+          className={`text-xs font-semibold py-1.5 px-3 rounded transition-colors border flex items-center justify-center gap-1 ${
             selectedNodeId
               ? 'bg-gray-700 hover:bg-red-700 text-gray-200 hover:text-white border-gray-600 hover:border-red-600'
               : 'bg-gray-800 text-gray-500 border-gray-700 cursor-not-allowed'
@@ -420,13 +420,13 @@ function NodeItem({
   };
 
   return (
-    <div className="flex flex-col ml-4">
+    <div className={`flex flex-col ${parentId !== 'root' ? 'ml-3.5 pl-2.5 border-l border-gray-700/70' : ''}`}>
       <div
         onClick={() => onSelectNode(node.id)}
-        className={`flex items-center gap-2 group py-1 rounded pr-2 border transition-colors relative cursor-pointer ${
+        className={`flex items-center gap-1.5 group py-1 px-1.5 rounded border transition-colors relative cursor-pointer ${
           isSelected
-            ? 'bg-blue-600/20 border-blue-500/60 text-white'
-            : 'border-transparent hover:bg-gray-700/50 hover:border-gray-600'
+            ? 'bg-blue-600/25 border-blue-500/70 text-white'
+            : 'border-transparent hover:bg-gray-700/40 hover:border-gray-700'
         }`}
         onDragOver={handleDragOver}
         onDrop={handleDrop}
@@ -434,9 +434,9 @@ function NodeItem({
         <div
           draggable
           onDragStart={handleDragStart}
-          className="cursor-grab text-gray-500 hover:text-gray-300 active:cursor-grabbing p-0.5"
+          className="cursor-grab text-gray-500 hover:text-gray-300 active:cursor-grabbing p-0.5 shrink-0"
         >
-          <GripVertical size={14} />
+          <GripVertical size={13} />
         </div>
 
         {isFolder ? (
@@ -445,12 +445,12 @@ function NodeItem({
               e.stopPropagation();
               setExpanded(!expanded);
             }}
-            className="text-gray-400 hover:text-white p-0.5"
+            className="text-gray-400 hover:text-white p-0.5 shrink-0"
           >
             <ItemIcon name={node.name} isFolder={true} expanded={expanded} />
           </button>
         ) : (
-          <div className="p-0.5">
+          <div className="p-0.5 shrink-0">
             <ItemIcon name={node.name} isFolder={false} />
           </div>
         )}
@@ -461,13 +461,13 @@ function NodeItem({
           onChange={handleNameChange}
           onClick={(e) => e.stopPropagation()}
           placeholder="Folder or File Name"
-          className={`bg-transparent border-b border-transparent hover:border-gray-600 focus:border-blue-500 focus:outline-none px-1 text-sm flex-grow min-w-[150px] font-medium ${
-            !isFolder ? 'text-blue-100 font-mono text-xs' : 'text-gray-100'
+          className={`bg-transparent border border-transparent hover:border-gray-600 focus:border-blue-500 focus:bg-gray-900/60 rounded px-1.5 py-0.5 text-xs flex-grow min-w-[140px] font-medium outline-none transition-colors ${
+            !isFolder ? 'text-cyan-200 font-mono' : 'text-gray-100'
           }`}
         />
 
         <div
-          className="opacity-0 group-hover:opacity-100 flex items-center gap-1 transition-opacity relative"
+          className="opacity-0 group-hover:opacity-100 flex items-center gap-1 transition-opacity relative shrink-0"
           onClick={(e) => e.stopPropagation()}
         >
           <select
@@ -477,8 +477,8 @@ function NodeItem({
                 e.target.value = '';
               }
             }}
-            className="bg-gray-800 text-xs text-gray-300 border border-gray-600 rounded px-1 py-0.5 focus:outline-none focus:border-blue-500 mr-1"
-            title="Insert Variable"
+            className="bg-gray-900 text-[11px] text-gray-300 border border-gray-600 rounded px-1.5 py-0.5 focus:outline-none focus:border-blue-500"
+            title="Insert Variable Token"
           >
             <option value="">{`{ }`}</option>
             <option value="project">[project]</option>
@@ -499,7 +499,7 @@ function NodeItem({
                 className="p-1 text-gray-400 hover:text-green-400 hover:bg-gray-600 rounded transition-colors flex items-center"
                 title="Add inside folder"
               >
-                <Plus size={14} />
+                <Plus size={13} />
               </button>
 
               {showNodeMenu && (
@@ -527,13 +527,13 @@ function NodeItem({
             className="p-1 text-gray-400 hover:text-red-400 hover:bg-gray-600 rounded transition-colors"
             title="Delete"
           >
-            <Trash2 size={14} />
+            <Trash2 size={13} />
           </button>
         </div>
       </div>
 
       {expanded && node.children.length > 0 && (
-        <div className="border-l border-gray-700 ml-2.5 pl-1.5 mt-0.5">
+        <div className="mt-0.5">
           <SortableTree
             nodes={node.children}
             parentId={node.id}
