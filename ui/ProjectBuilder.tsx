@@ -24,7 +24,7 @@ export default function ProjectBuilder({ onProjectCreated }: ProjectBuilderProps
   const [selectedTemplate, setSelectedTemplate] = useState('');
   const [templateParams, setTemplateParams] = useState<TemplateParam[]>([]);
   const [targetDir, setTargetDir] = useState(() => {
-    return localStorage.getItem('scaffild_target_dir') || localStorage.getItem('slate_target_dir') || 'C:\\Users\\hippo\\Videos\\00_PROJECTS';
+    return localStorage.getItem('scaffild_target_dir') || '';
   });
   const [params, setParams] = useState<Record<string, string>>({});
   const [openProjectAfterCreate, setOpenProjectAfterCreate] = useState(true);
@@ -97,7 +97,7 @@ export default function ProjectBuilder({ onProjectCreated }: ProjectBuilderProps
           if (param.name === 'date' && !def) def = new Date().toISOString().split('T')[0];
           if (param.name === 'id' && !def) def = '0001';
           if (param.name === 'title' && !def) def = '';
-          if (param.name === 'editor' && !def) def = 'hippo';
+          if (param.name === 'editor' && !def) def = localStorage.getItem('scaffild_default_editor') || '';
           newParams[param.name] = def;
         });
         setParams(newParams);
@@ -223,7 +223,7 @@ export default function ProjectBuilder({ onProjectCreated }: ProjectBuilderProps
                 type="text"
                 value={targetDir}
                 onChange={e => setTargetDir(e.target.value)}
-                placeholder="e.g. C:\Users\hippo\Videos\00_PROJECTS"
+                placeholder="e.g. D:\Projects\2026 or C:\Video_Projects"
                 className="flex-grow bg-gray-800 border border-gray-700 rounded p-2 focus:outline-none focus:border-blue-500 font-mono text-sm text-white"
               />
               <button

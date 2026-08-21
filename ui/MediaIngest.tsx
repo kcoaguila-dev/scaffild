@@ -218,7 +218,7 @@ export default function MediaIngest({ initialTargetDir }: MediaIngestProps) {
               type="text"
               value={targetProjectDir}
               onChange={e => setTargetProjectDir(e.target.value)}
-              placeholder="e.g. C:\Users\hippo\Videos\00_PROJECTS\0001_New_Project"
+              placeholder="e.g. D:\Projects\2026\0042_Nike_Commercial"
               className="flex-grow bg-gray-800 border border-gray-700 rounded p-2 focus:outline-none focus:border-blue-500 font-mono text-sm text-white"
             />
             <button

@@ -67,11 +67,15 @@ export default function MenuBar({
 
   const handleOpenProjectsDir = async () => {
     setOpenMenu(null);
-    const targetDir = localStorage.getItem('scaffild_target_dir') || 'C:\\Users\\hippo\\Videos\\00_PROJECTS';
-    try {
-      await invoke('open_project_in_premiere', { projectPath: targetDir });
-    } catch (e) {
-      console.error('Failed to open projects dir:', e);
+    const targetDir = localStorage.getItem('scaffild_target_dir');
+    if (targetDir) {
+      try {
+        await invoke('open_project_in_premiere', { projectPath: targetDir });
+      } catch (e) {
+        console.error('Failed to open projects dir:', e);
+      }
+    } else if (onBrowseTargetDir) {
+      onBrowseTargetDir();
     }
   };
 
