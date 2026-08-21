@@ -1,5 +1,4 @@
 ﻿use std::collections::HashMap;
-use std::fs;
 use tempfile::TempDir;
 use scaffild_lib::builder::{build_project, ProjectParams};
 use scaffild_lib::template::{save_template, Template};

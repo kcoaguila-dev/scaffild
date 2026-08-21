@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "test": "npx vitest run",
+    "test": "vitest run",
     "tauri": "tauri"
   },
   "dependencies": {

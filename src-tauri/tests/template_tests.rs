@@ -1,4 +1,4 @@
-﻿use scaffild_lib::template::{Template, TemplateParamEntry};
+﻿use scaffild_lib::template::Template;
 
 #[test]
 fn test_template_deserialization_clean() {

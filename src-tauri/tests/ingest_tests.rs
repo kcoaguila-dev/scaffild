@@ -1,5 +1,4 @@
 ﻿use std::fs;
-use std::io::Write;
 use tempfile::TempDir;
 use scaffild_lib::ingest::ingest_media_core;
 
