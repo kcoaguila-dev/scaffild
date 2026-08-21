@@ -173,24 +173,22 @@ export default function TemplateManager() {
       const res = await invoke<{ name: string; path: string; structure: any[] } | null>('pick_folder_and_scan');
       if (!res) return;
 
-      const targetName = selectedTemplate || res.name.replace(/[^a-zA-Z0-9_-]/g, '_');
-      const baseTemplate = templateData || {
+      const targetName = res.name.replace(/[^a-zA-Z0-9_-]/g, '_');
+      const baseTemplate = {
         name: targetName,
         description: `Imported from ${res.path}`,
         parameters: ['id', 'title', 'date', 'editor'],
-        structure: [],
+        structure: res.structure,
       };
-      const updated = { ...baseTemplate, structure: res.structure };
-      setTemplateData(updated);
-      setYamlText(stringify(updated));
-      if (!selectedTemplate) {
-        setSelectedTemplate(targetName);
-        if (!templates.includes(targetName)) {
-          setTemplates([...templates, targetName]);
-        }
-      }
+
+      await invoke('save_template', { name: targetName, template: baseTemplate });
+      await loadTemplates();
+      setSelectedTemplate(targetName);
+      setTemplateData(baseTemplate);
+      setYamlText(stringify(baseTemplate));
+
       setIsImportModalOpen(false);
-      setStatus(`Imported all folders and files from ${res.name}`);
+      setStatus(`Successfully imported and saved template "${targetName}"`);
       setTimeout(() => setStatus(''), 4000);
     } catch (err) {
       console.warn('Native folder picker fallback to modal:', err);

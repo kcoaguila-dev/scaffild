@@ -124,8 +124,9 @@ pub fn load_template(name: String) -> Result<Template, String> {
     let mut path = get_templates_dir();
     path.push(format!("{}.yaml", safe_name));
 
-    let content = fs::read_to_string(&path).map_err(|e| e.to_string())?;
-    let template: Template = serde_yaml::from_str(&content).map_err(|e| e.to_string())?;
+    let raw_content = fs::read_to_string(&path).map_err(|e| e.to_string())?;
+    let content = raw_content.trim_start_matches('\u{feff}');
+    let template: Template = serde_yaml::from_str(content).map_err(|e| format!("Failed to parse {}: {}", name, e))?;
     Ok(template)
 }
 
