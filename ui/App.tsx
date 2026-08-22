@@ -6,7 +6,6 @@ import MenuBar, { RecentProjectItem } from './MenuBar';
 import ShortcutsModal from './ShortcutsModal';
 import AboutModal from './AboutModal';
 import McpSetupModal from './McpSetupModal';
-import ScaffildLogo from './ScaffildLogo';
 import { invoke } from '@tauri-apps/api/core';
 
 function App() {
