@@ -1,7 +1,7 @@
 # Scaffild
 
 <div align="center">
-  <img src="public/logo.jpg" alt="Scaffild Logo" width="480" style="border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);" />
+  <img src="public/app-icon.png" alt="Scaffild Logo" width="160" />
 </div>
 
 <br />
