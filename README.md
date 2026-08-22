@@ -7,7 +7,7 @@
 <br />
 
 [![CI Test Suite](https://github.com/kcoaguila-dev/scaffild/actions/workflows/test.yml/badge.svg)](https://github.com/kcoaguila-dev/scaffild/actions/workflows/test.yml)
-[![Release](https://img.shields.io/badge/Release-v0.1.0-blue.svg)](https://github.com/kcoaguila-dev/scaffild/releases)
+[![Release](https://img.shields.io/badge/Release-v0.1.2-blue.svg)](https://github.com/kcoaguila-dev/scaffild/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Platform: Windows](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS-informational.svg)]()
 [![Rust](https://img.shields.io/badge/Backend-Rust%20%28Tauri%20v2%29-orange.svg)]()
