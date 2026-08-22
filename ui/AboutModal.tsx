@@ -27,7 +27,7 @@ export default function AboutModal({ isOpen, onClose }: AboutModalProps) {
 
         <div>
           <h3 className="text-xl font-bold text-white">Scaffild</h3>
-          <p className="text-xs text-gray-400 font-mono mt-0.5">Version 0.1.0</p>
+          <p className="text-xs text-gray-400 font-mono mt-0.5">Version 0.1.1</p>
         </div>
 
         <p className="text-xs text-gray-300 leading-relaxed">

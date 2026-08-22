@@ -1,4 +1,4 @@
-﻿# Scaffild
+# Scaffild
 
 <div align="center">
   <img src="public/logo.jpg" alt="Scaffild Logo" width="480" style="border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);" />
@@ -25,8 +25,8 @@ Ready-to-install release binaries are packaged in `dist-installers/` and availab
 
 | Installer Format | File | Description |
 | :--- | :--- | :--- |
-| **Windows Setup Wizard** | `scaffild_0.1.0_x64-setup.exe` | Standard Windows installer with Start Menu & Desktop shortcuts |
-| **Windows MSI Package** | `scaffild_0.1.0_x64_en-US.msi` | Enterprise & silent installation package |
+| **Windows Setup Wizard** | `scaffild_0.1.1_x64-setup.exe` | Standard Windows installer with Start Menu & Desktop shortcuts |
+| **Windows MSI Package** | `scaffild_0.1.1_x64_en-US.msi` | Enterprise & silent installation package |
 | **Portable Standalone** | `scaffild-portable.exe` | Zero-install standalone executable (runs from USB or NAS) |
 
 ---
