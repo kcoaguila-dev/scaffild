@@ -1,4 +1,4 @@
-﻿interface ScaffildLogoProps {
+interface ScaffildLogoProps {
   size?: number;
   className?: string;
 }
@@ -7,12 +7,12 @@ export default function ScaffildLogo({ size = 20, className = "" }: ScaffildLogo
   return (
     <div
       style={{ width: size, height: size }}
-      className={`relative inline-flex items-center justify-center shrink-0 rounded-full overflow-hidden shadow-sm ${className}`}
+      className={`relative inline-flex items-center justify-center shrink-0 ${className}`}
     >
       <img
-        src="/app-icon.jpg"
+        src="/app-icon.png"
         alt="Scaffild Logo"
-        className="w-full h-full object-cover select-none pointer-events-none"
+        className="w-full h-full object-contain select-none pointer-events-none drop-shadow-md"
       />
     </div>
   );

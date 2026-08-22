@@ -21,7 +21,7 @@ export default function AboutModal({ isOpen, onClose }: AboutModalProps) {
           </button>
         </div>
 
-        <div className="inline-flex p-1.5 bg-gray-950 border border-cyan-500/30 rounded-full shadow-2xl shadow-cyan-900/20">
+        <div className="inline-flex p-3 bg-gray-950/80 border border-purple-500/30 rounded-2xl shadow-2xl shadow-purple-950/40">
           <ScaffildLogo size={64} />
         </div>
 
