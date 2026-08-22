@@ -25,8 +25,8 @@ Ready-to-install release binaries are packaged in `dist-installers/` and availab
 
 | Installer Format | File | Description |
 | :--- | :--- | :--- |
-| **Windows Setup Wizard** | `scaffild_0.1.1_x64-setup.exe` | Standard Windows installer with Start Menu & Desktop shortcuts |
-| **Windows MSI Package** | `scaffild_0.1.1_x64_en-US.msi` | Enterprise & silent installation package |
+| **Windows Setup Wizard** | `scaffild_0.1.2_x64-setup.exe` | Standard Windows installer with Start Menu & Desktop shortcuts |
+| **Windows MSI Package** | `scaffild_0.1.2_x64_en-US.msi` | Enterprise & silent installation package |
 | **Portable Standalone** | `scaffild-portable.exe` | Zero-install standalone executable (runs from USB or NAS) |
 
 ---
