@@ -51,19 +51,11 @@
       font-weight: 600;
       cursor: pointer;
       flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
+      text-align: center;
       transition: background 0.15s ease;
     }
     button:hover { background: #1d4ed8; }
     button:active { background: #1e40af; }
-    .icon {
-      width: 12px;
-      height: 12px;
-      fill: currentColor;
-    }
     .log-box {
       background: #090a0f;
       border: 1px solid #1f293d;
@@ -90,10 +82,7 @@
     <span id="status" style="color: #10b981; font-size: 10px;">Live Watcher Active</span>
   </div>
   <div class="actions">
-    <button id="btnSync" onclick="manualSync()">
-      <svg class="icon" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-      Sync All Bins Now
-    </button>
+    <button id="btnSync" onclick="manualSync()">Sync All Bins Now</button>
   </div>
   <div class="log-box" id="log">
     <div class="log-entry log-info">[Ready] Watching project directory in real-time...</div>
