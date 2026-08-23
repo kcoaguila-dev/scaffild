@@ -1,0 +1,104 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Scaffild AutoSync</title>
+  <style>
+    body {
+      background: #14161f;
+      color: #e2e8f0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      margin: 0;
+      padding: 10px;
+      font-size: 11px;
+      user-select: none;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #232a3b;
+      padding-bottom: 6px;
+      margin-bottom: 8px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 700;
+      color: #38bdf8;
+      font-size: 12px;
+    }
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 6px #10b981;
+    }
+    .actions {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+    button {
+      background: #2563eb;
+      color: white;
+      border: none;
+      padding: 6px 10px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: background 0.15s ease;
+    }
+    button:hover { background: #1d4ed8; }
+    button:active { background: #1e40af; }
+    .icon {
+      width: 12px;
+      height: 12px;
+      fill: currentColor;
+    }
+    .log-box {
+      background: #090a0f;
+      border: 1px solid #1f293d;
+      border-radius: 4px;
+      padding: 6px;
+      height: 120px;
+      overflow-y: auto;
+      font-family: Consolas, Monaco, monospace;
+      font-size: 10px;
+      color: #94a3b8;
+    }
+    .log-entry { margin-bottom: 2px; }
+    .log-ok { color: #34d399; }
+    .log-info { color: #38bdf8; }
+    .log-err { color: #f87171; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="brand">
+      <div class="dot"></div>
+      <span>Scaffild AutoSync</span>
+    </div>
+    <span id="status" style="color: #10b981; font-size: 10px;">Live Watcher Active</span>
+  </div>
+  <div class="actions">
+    <button id="btnSync" onclick="manualSync()">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      Sync All Bins Now
+    </button>
+  </div>
+  <div class="log-box" id="log">
+    <div class="log-entry log-info">[Ready] Watching project directory in real-time...</div>
+  </div>
+  <script src="CSInterface.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>
