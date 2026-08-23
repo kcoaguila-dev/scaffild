@@ -67,6 +67,77 @@ impl Default for WatcherState {
     }
 }
 
+/// Dispatches an ExtendScript command file to the Premiere CEP bridge
+pub fn dispatch_to_premiere_bridge(file_path: &str, bins: &[String]) {
+    let temp_dirs = [
+        std::env::temp_dir().join("scaffild-premiere-bridge"),
+        std::env::temp_dir().join("premiere-mcp-bridge"),
+    ];
+
+    let bins_json = serde_json::to_string(bins).unwrap_or_else(|_| "[]".to_string());
+    let escaped_path = file_path.replace('\\', "\\\\").replace('"', "\\\"");
+
+    let jsx_code = format!(
+        r#"
+(function() {{
+    try {{
+        if (!app.project) return JSON.stringify({{ error: "No active Premiere Pro project" }});
+
+        function getOrCreateBin(name, parentBin) {{
+            var items = parentBin ? parentBin.children : app.project.rootItem.children;
+            for (var i = 0; i < items.numItems; i++) {{
+                var item = items[i];
+                if (item.type === ProjectItemType.BIN && item.name === name) {{
+                    return item;
+                }}
+            }}
+            return parentBin ? parentBin.createBin(name) : app.project.rootItem.createBin(name);
+        }}
+
+        var targetBin = null;
+        var binHierarchy = {};
+        if (binHierarchy && binHierarchy.length > 0) {{
+            for (var i = 0; i < binHierarchy.length; i++) {{
+                targetBin = getOrCreateBin(binHierarchy[i], targetBin);
+            }}
+        }} else {{
+            targetBin = app.project.rootItem;
+        }}
+
+        var filePath = "{}";
+        var fileName = filePath.replace(/^.*[\\\/]/, '');
+        var existing = targetBin.children;
+        for (var j = 0; j < existing.numItems; j++) {{
+            if (existing[j].name === fileName) {{
+                return JSON.stringify({{ success: true, alreadyImported: true, file: filePath }});
+            }}
+        }}
+
+        app.project.importFiles([filePath], false, targetBin, false);
+        return JSON.stringify({{ success: true, imported: filePath }});
+    }} catch (e) {{
+        return JSON.stringify({{ error: e.toString() }});
+    }}
+}})();
+"#,
+        bins_json, escaped_path
+    );
+
+    let ts = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_millis())
+        .unwrap_or(0);
+
+    let filename = format!("cmd_autosync_{}.jsx", ts);
+
+    for dir in &temp_dirs {
+        if !dir.exists() {
+            let _ = std::fs::create_dir_all(dir);
+        }
+        let _ = std::fs::write(dir.join(&filename), &jsx_code);
+    }
+}
+
 /// Checks if a file has a supported media extension
 pub fn is_media_file(path: &Path) -> bool {
     if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
@@ -115,7 +186,7 @@ pub fn get_relative_bin_hierarchy(file_path: &Path, project_root: &Path) -> Opti
     Some(bins)
 }
 
-/// Recursively scans project directory and returns all media mapped to dynamic bins
+/// Recursively scans project directory and returns all media mapped to dynamic bins, and sends to Premiere bridge
 #[tauri::command]
 pub fn scan_project_media_bins(project_dir: String) -> Result<Vec<DiscoveredMediaItem>, String> {
     let root = PathBuf::from(&project_dir);
@@ -133,13 +204,18 @@ pub fn scan_project_media_bins(project_dir: String) -> Result<Vec<DiscoveredMedi
                 let extension = path.extension().unwrap_or_default().to_string_lossy().to_string();
                 let size_bytes = entry.metadata().map(|m| m.len()).unwrap_or(0);
 
-                items.push(DiscoveredMediaItem {
+                let item = DiscoveredMediaItem {
                     file_path: path.to_string_lossy().to_string(),
                     file_name,
-                    bin_hierarchy: bins,
+                    bin_hierarchy: bins.clone(),
                     extension,
                     size_bytes,
-                });
+                };
+
+                // Dispatch to Premiere bridge
+                dispatch_to_premiere_bridge(&item.file_path, &bins);
+
+                items.push(item);
             }
         }
     }
@@ -177,9 +253,12 @@ pub fn start_project_watcher(
                                         event_type: format!("{:?}", event.kind),
                                         file_path: path.to_string_lossy().to_string(),
                                         file_name: path.file_name().unwrap_or_default().to_string_lossy().to_string(),
-                                        bin_hierarchy: bins,
+                                        bin_hierarchy: bins.clone(),
                                     };
                                     let _ = app_for_handler.emit("media-detected", payload);
+
+                                    // Automatically send import command to Premiere CEP bridge!
+                                    dispatch_to_premiere_bridge(&path.to_string_lossy(), &bins);
                                 }
                             }
                         }
