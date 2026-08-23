@@ -1,4 +1,4 @@
-use scaffild::cep_installer;
+use scaffild_lib::cep_installer;
 
 #[test]
 fn test_get_cep_extensions_dir() {
