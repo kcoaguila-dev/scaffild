@@ -92,10 +92,9 @@ graph TD
 * **`xxHash64` Hardware Checksums**: Verifies bit-for-bit integrity and generates an industry-standard `checksum_manifest.txt`.
 * **Audio Completion Notification**: Synthesized audio cue upon verification completion.
 
-### 3. Dynamic Premiere Bin Sync (`SyncBins.jsx`)
-* Automatically placed inside `01_PROJECT_FILES/` alongside your `.prproj`.
-* In Premiere (**File > Scripts > Run Script File...**), mirrors all disk folders into bins and imports footage into matching bins.
-* Automatically organizes timelines into a clean `00_SEQUENCES` bin.
+### 3. Premiere Pro Media Organization & Companion Script (`SyncBins.jsx`)
+* **Instant Drag-and-Drop Ingest**: Dragging your scaffolding folders (`02_FOOTAGE`, `03_AUDIO`, `04_GRAPHICS`) directly from File Explorer into Premiere Pro's Project Panel automatically preserves folder structures as native Bins.
+* **`SyncBins.jsx` Automation Companion**: Placed inside `01_PROJECT_FILES/` alongside your `.prproj` for automation workflows, CEP extensions, and ExtendScript runners to auto-populate bins and organize sequences.
 
 ### 4. Built-in AI Agent Server (Model Context Protocol - MCP)
 Connect **Claude Desktop**, **Cursor**, or **Antigravity** to Scaffild:

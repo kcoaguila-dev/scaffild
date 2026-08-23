@@ -340,7 +340,7 @@ export default function MediaIngest({ initialTargetDir }: MediaIngestProps) {
                   </button>
                 </div>
                 <p className="text-xs text-gray-300 leading-relaxed">
-                  To batch-import your newly ingested media into Premiere bins, run <code className="bg-purple-900/80 px-1.5 py-0.5 rounded text-purple-200 font-mono text-[11px]">SyncBins.jsx</code> inside Premiere (<strong>File &gt; Scripts &gt; Run Script File...</strong> located next to your project file).
+                  Drag your <code className="bg-purple-900/80 px-1.5 py-0.5 rounded text-purple-200 font-mono text-[11px]">02_FOOTAGE</code> folder directly into Premiere&apos;s Project Panel to instantly import all subfolders as organized bins.
                 </p>
               </div>
             )}
