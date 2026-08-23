@@ -3,11 +3,13 @@ pub mod cli;
 pub mod ingest;
 pub mod mcp;
 pub mod template;
+pub mod watcher;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .manage(watcher::WatcherState::default())
         .setup(|app| {
             use tauri::Manager;
             if let Some(window) = app.get_webview_window("main") {
@@ -28,7 +30,11 @@ pub fn run() {
             builder::build_project,
             builder::open_project_in_premiere,
             builder::get_next_project_id,
-            ingest::ingest_media
+            ingest::ingest_media,
+            watcher::start_project_watcher,
+            watcher::stop_project_watcher,
+            watcher::get_watcher_status,
+            watcher::scan_project_media_bins
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

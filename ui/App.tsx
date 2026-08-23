@@ -6,6 +6,7 @@ import MenuBar, { RecentProjectItem } from './MenuBar';
 import ShortcutsModal from './ShortcutsModal';
 import AboutModal from './AboutModal';
 import McpSetupModal from './McpSetupModal';
+import { LiveSyncBar } from './LiveSyncBar';
 import { invoke } from '@tauri-apps/api/core';
 
 function App() {
@@ -34,6 +35,9 @@ function App() {
       localStorage.setItem('scaffild_recent_projects', JSON.stringify(updated));
       return updated;
     });
+
+    // Automatically start background watcher on newly created project directory!
+    invoke('start_project_watcher', { projectDir: item.path }).catch(() => {});
   };
 
   useEffect(() => {
@@ -135,6 +139,9 @@ function App() {
         {activeTab === 'templates' && <TemplateManager />}
         {activeTab === 'ingest' && <MediaIngest initialTargetDir={preselectedIngestDir} />}
       </main>
+
+      {/* Live Premiere Auto-Sync Bar */}
+      <LiveSyncBar />
 
       {/* Modals */}
       <ShortcutsModal isOpen={isShortcutsOpen} onClose={() => setIsShortcutsOpen(false)} />
