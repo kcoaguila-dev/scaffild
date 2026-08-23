@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
-import { RefreshCw, CheckCircle2, Eye, EyeOff } from 'lucide-react';
+import { RefreshCw, CheckCircle2, Eye, EyeOff, Plug } from 'lucide-react';
 
 interface WatcherStatus {
   is_watching: boolean;
@@ -15,7 +15,11 @@ interface MediaDetectedPayload {
   bin_hierarchy: string[];
 }
 
-export function LiveSyncBar() {
+interface LiveSyncBarProps {
+  onOpenExtensionModal?: () => void;
+}
+
+export function LiveSyncBar({ onOpenExtensionModal }: LiveSyncBarProps = {}) {
   const [status, setStatus] = useState<WatcherStatus>({ is_watching: false, active_project: null });
   const [lastSyncedFile, setLastSyncedFile] = useState<string | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -108,6 +112,17 @@ export function LiveSyncBar() {
       </div>
 
       <div className="flex items-center gap-2">
+        {onOpenExtensionModal && (
+          <button
+            onClick={onOpenExtensionModal}
+            className="px-2 py-1 bg-blue-950/40 hover:bg-blue-900/50 text-blue-300 rounded flex items-center gap-1 text-[11px] transition-colors border border-blue-800/40"
+            title="Manage Premiere Pro Extension"
+          >
+            <Plug size={11} />
+            <span>Plugin</span>
+          </button>
+        )}
+
         <button
           onClick={handleManualScan}
           disabled={isSyncing}

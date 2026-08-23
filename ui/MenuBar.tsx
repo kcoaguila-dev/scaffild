@@ -18,6 +18,7 @@ interface MenuBarProps {
   recentProjects: RecentProjectItem[];
   onClearRecentProjects: () => void;
   onNavigateToIngest?: (dir: string) => void;
+  onOpenExtensionModal?: () => void;
 }
 
 export default function MenuBar({
@@ -29,6 +30,7 @@ export default function MenuBar({
   recentProjects,
   onClearRecentProjects,
   onNavigateToIngest,
+  onOpenExtensionModal,
 }: MenuBarProps) {
   const [openMenu, setOpenMenu] = useState<'file' | 'view' | 'tools' | 'help' | null>(null);
   const [isRecentSubmenuOpen, setIsRecentSubmenuOpen] = useState(false);
@@ -268,6 +270,17 @@ export default function MenuBar({
             >
               <span>Open Projects Folder</span>
               <ExternalLink size={12} className="text-gray-400" />
+            </div>
+            <div className="border-t border-gray-800 my-1"></div>
+            <div
+              onClick={() => {
+                setOpenMenu(null);
+                if (onOpenExtensionModal) onOpenExtensionModal();
+              }}
+              className="px-3 py-1.5 hover:bg-blue-600 hover:text-white flex items-center justify-between cursor-pointer text-blue-300 font-medium"
+            >
+              <span>Install Premiere Plugin...</span>
+              <span className="text-[10px] bg-blue-900/60 text-blue-200 px-1 rounded">CEP</span>
             </div>
             {onOpenMcpSetup && (
               <>

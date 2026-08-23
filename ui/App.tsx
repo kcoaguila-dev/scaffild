@@ -6,6 +6,7 @@ import MenuBar, { RecentProjectItem } from './MenuBar';
 import ShortcutsModal from './ShortcutsModal';
 import AboutModal from './AboutModal';
 import McpSetupModal from './McpSetupModal';
+import ExtensionModal from './ExtensionModal';
 import { LiveSyncBar } from './LiveSyncBar';
 import { invoke } from '@tauri-apps/api/core';
 
@@ -15,6 +16,7 @@ function App() {
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
   const [isMcpSetupOpen, setIsMcpSetupOpen] = useState(false);
+  const [isExtensionModalOpen, setIsExtensionModalOpen] = useState(false);
   const [recentProjects, setRecentProjects] = useState<RecentProjectItem[]>(() => {
     try {
       const saved = localStorage.getItem('scaffild_recent_projects');
@@ -91,6 +93,7 @@ function App() {
         onOpenShortcuts={() => setIsShortcutsOpen(true)}
         onOpenAbout={() => setIsAboutOpen(true)}
         onOpenMcpSetup={() => setIsMcpSetupOpen(true)}
+        onOpenExtensionModal={() => setIsExtensionModalOpen(true)}
         onBrowseTargetDir={handleBrowseTargetDir}
         recentProjects={recentProjects}
         onClearRecentProjects={handleClearRecentProjects}
@@ -141,12 +144,13 @@ function App() {
       </main>
 
       {/* Live Premiere Auto-Sync Bar */}
-      <LiveSyncBar />
+      <LiveSyncBar onOpenExtensionModal={() => setIsExtensionModalOpen(true)} />
 
       {/* Modals */}
       <ShortcutsModal isOpen={isShortcutsOpen} onClose={() => setIsShortcutsOpen(false)} />
       <AboutModal isOpen={isAboutOpen} onClose={() => setIsAboutOpen(false)} />
       <McpSetupModal isOpen={isMcpSetupOpen} onClose={() => setIsMcpSetupOpen(false)} />
+      <ExtensionModal isOpen={isExtensionModalOpen} onClose={() => setIsExtensionModalOpen(false)} />
     </div>
   );
 }

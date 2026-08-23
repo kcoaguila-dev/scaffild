@@ -1,4 +1,5 @@
 pub mod builder;
+pub mod cep_installer;
 pub mod cli;
 pub mod ingest;
 pub mod mcp;
@@ -34,7 +35,9 @@ pub fn run() {
             watcher::start_project_watcher,
             watcher::stop_project_watcher,
             watcher::get_watcher_status,
-            watcher::scan_project_media_bins
+            watcher::scan_project_media_bins,
+            cep_installer::is_premiere_extension_installed,
+            cep_installer::install_premiere_extension
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
