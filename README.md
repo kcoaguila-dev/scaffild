@@ -7,7 +7,7 @@
 <br />
 
 [![CI Test Suite](https://github.com/kcoaguila-dev/scaffild/actions/workflows/test.yml/badge.svg)](https://github.com/kcoaguila-dev/scaffild/actions/workflows/test.yml)
-[![Release](https://img.shields.io/badge/Release-v0.1.2-blue.svg)](https://github.com/kcoaguila-dev/scaffild/releases)
+[![Release](https://img.shields.io/badge/Release-v0.1.3-blue.svg)](https://github.com/kcoaguila-dev/scaffild/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Platform: Windows](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS-informational.svg)]()
 [![Rust](https://img.shields.io/badge/Backend-Rust%20%28Tauri%20v2%29-orange.svg)]()
@@ -25,8 +25,8 @@ Ready-to-install release binaries are packaged in `dist-installers/` and availab
 
 | Installer Format | File | Description |
 | :--- | :--- | :--- |
-| **Windows Setup Wizard** | `scaffild_0.1.2_x64-setup.exe` | Standard Windows installer with Start Menu & Desktop shortcuts |
-| **Windows MSI Package** | `scaffild_0.1.2_x64_en-US.msi` | Enterprise & silent installation package |
+| **Windows Setup Wizard** | `scaffild_0.1.3_x64-setup.exe` | Standard Windows installer with Start Menu & Desktop shortcuts |
+| **Windows MSI Package** | `scaffild_0.1.3_x64_en-US.msi` | Enterprise & silent installation package |
 | **Portable Standalone** | `scaffild-portable.exe` | Zero-install standalone executable (runs from USB or NAS) |
 
 ---
