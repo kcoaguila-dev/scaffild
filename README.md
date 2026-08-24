@@ -17,6 +17,22 @@
 
 Instantly scaffold standardized project folders, clone pre-configured Premiere Pro (`.prproj`) and Photoshop (`.psd`) master templates, offload camera media with verified dual backups, and automate your entire workflow with AI.
 
+<br />
+
+<div align="center">
+  <img src="docs/screenshots/new-project.png" alt="Scaffild New Project Builder" width="850" />
+  <p><sub><strong>New Project Builder:</strong> Instant standardized folder scaffolding, live naming preview, and 1-click template cloning.</sub></p>
+</div>
+
+<br />
+
+<div align="center">
+  <img src="docs/screenshots/template-manager.png" alt="Scaffild Template Manager" width="850" />
+  <p><sub><strong>Visual Template Manager:</strong> Customize folder structures, configure Adobe master files, and import existing project trees.</sub></p>
+</div>
+
+<br />
+
 ---
 
 ## Download & Installation
