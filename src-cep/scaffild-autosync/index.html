@@ -42,8 +42,6 @@
       margin-bottom: 8px;
     }
     button {
-      background: #2563eb;
-      color: white;
       border: none;
       padding: 6px 10px;
       border-radius: 4px;
@@ -54,8 +52,27 @@
       text-align: center;
       transition: background 0.15s ease;
     }
-    button:hover { background: #1d4ed8; }
-    button:active { background: #1e40af; }
+    .btn-primary {
+      background: #2563eb;
+      color: white;
+    }
+    .btn-primary:hover { background: #1d4ed8; }
+    .btn-primary:active { background: #1e40af; }
+    
+    .btn-danger {
+      background: #991b1b;
+      color: #fecaca;
+      border: 1px solid #dc2626/40;
+    }
+    .btn-danger:hover { background: #b91c1c; color: white; }
+    .btn-danger:active { background: #7f1d1d; }
+
+    .btn-cancel {
+      background: #334155;
+      color: #e2e8f0;
+    }
+    .btn-cancel:hover { background: #475569; }
+
     .log-box {
       background: #090a0f;
       border: 1px solid #1f293d;
@@ -71,6 +88,59 @@
     .log-ok { color: #34d399; }
     .log-info { color: #38bdf8; }
     .log-err { color: #f87171; }
+    .log-warn { color: #fbbf24; }
+
+    /* Modal Warning Dialog */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.75);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+      z-index: 100;
+    }
+    .modal {
+      background: #1e2330;
+      border: 1px solid #3b4252;
+      border-radius: 6px;
+      padding: 12px;
+      max-width: 280px;
+      width: 100%;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    }
+    .modal-title {
+      font-weight: 700;
+      color: #f87171;
+      font-size: 12px;
+      margin-bottom: 6px;
+    }
+    .modal-msg {
+      color: #cbd5e1;
+      font-size: 11px;
+      margin-bottom: 8px;
+      line-height: 1.4;
+    }
+    .modal-list {
+      background: #0f1219;
+      border: 1px solid #282e3f;
+      border-radius: 4px;
+      padding: 6px;
+      max-height: 60px;
+      overflow-y: auto;
+      font-family: monospace;
+      font-size: 10px;
+      color: #fca5a5;
+      margin-bottom: 10px;
+    }
+    .modal-actions {
+      display: flex;
+      gap: 6px;
+    }
   </style>
 </head>
 <body>
@@ -81,12 +151,29 @@
     </div>
     <span id="status" style="color: #10b981; font-size: 10px;">Live Watcher Active</span>
   </div>
+
   <div class="actions">
-    <button id="btnSync" onclick="manualSync()">Sync All Bins Now</button>
+    <button id="btnSync" class="btn-primary" onclick="manualSync()">Sync All Bins</button>
+    <button id="btnClean" class="btn-danger" onclick="promptCleanOffline()">Clean Offline</button>
   </div>
+
   <div class="log-box" id="log">
     <div class="log-entry log-info">[Ready] Watching project directory in real-time...</div>
   </div>
+
+  <!-- Confirmation Warning Modal -->
+  <div id="modalOverlay" class="modal-overlay" style="display: none;">
+    <div class="modal">
+      <div class="modal-title">?? Warning: Clean Offline Clips</div>
+      <div id="modalMsg" class="modal-msg"></div>
+      <div id="modalList" class="modal-list"></div>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+        <button class="btn-danger" onclick="confirmCleanOffline()">Remove Clips</button>
+      </div>
+    </div>
+  </div>
+
   <script src="CSInterface.js"></script>
   <script src="main.js"></script>
 </body>

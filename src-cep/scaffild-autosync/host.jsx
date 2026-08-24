@@ -128,3 +128,60 @@ function syncEntireProjectFolder(rootFolderPath) {
         return JSON.stringify({ error: e.toString() });
     }
 }
+
+function findOfflineClips() {
+    try {
+        if (!app.project) return JSON.stringify({ error: "No active Premiere Pro project" });
+
+        var offlineClips = [];
+
+        function scanItems(parentItem) {
+            var items = parentItem.children;
+            if (!items) return;
+            for (var i = 0; i < items.numItems; i++) {
+                var item = items[i];
+                if (item.type === ProjectItemType.BIN) {
+                    scanItems(item);
+                } else if (item.type === ProjectItemType.CLIP || item.type === ProjectItemType.FILE) {
+                    if (item.isOffline && item.isOffline()) {
+                        offlineClips.push(item.name);
+                    }
+                }
+            }
+        }
+
+        scanItems(app.project.rootItem);
+        return JSON.stringify({ success: true, count: offlineClips.length, clips: offlineClips });
+    } catch(e) {
+        return JSON.stringify({ error: e.toString() });
+    }
+}
+
+function removeOfflineClips() {
+    try {
+        if (!app.project) return JSON.stringify({ error: "No active Premiere Pro project" });
+
+        var removed = 0;
+
+        function purgeOffline(parentItem) {
+            var items = parentItem.children;
+            if (!items) return;
+            for (var i = items.numItems - 1; i >= 0; i--) {
+                var item = items[i];
+                if (item.type === ProjectItemType.BIN) {
+                    purgeOffline(item);
+                } else if (item.type === ProjectItemType.CLIP || item.type === ProjectItemType.FILE) {
+                    if (item.isOffline && item.isOffline()) {
+                        item.deleteItem();
+                        removed++;
+                    }
+                }
+            }
+        }
+
+        purgeOffline(app.project.rootItem);
+        return JSON.stringify({ success: true, removedCount: removed });
+    } catch(e) {
+        return JSON.stringify({ error: e.toString() });
+    }
+}

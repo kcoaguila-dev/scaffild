@@ -18,10 +18,56 @@ function log(msg, cls) {
   while (el.children.length > 100) el.removeChild(el.firstChild);
 }
 
+function closeModal() {
+  document.getElementById("modalOverlay").style.display = "none";
+}
+
+function promptCleanOffline() {
+  cs.evalScript("findOfflineClips()", function(res) {
+    try {
+      var parsed = JSON.parse(res);
+      if (!parsed.success) {
+        log("Scan error: " + (parsed.error || res), "log-err");
+        return;
+      }
+      if (parsed.count === 0) {
+        log("No offline clips found. Project is 100% connected!", "log-ok");
+        return;
+      }
+      document.getElementById("modalMsg").textContent = "Found " + parsed.count + " missing clip" + (parsed.count > 1 ? "s" : "") + " deleted from disk. Remove from Premiere bins?";
+      var listHtml = "";
+      for (var i = 0; i < parsed.clips.length; i++) {
+        listHtml += "<div>• " + parsed.clips[i] + "</div>";
+      }
+      document.getElementById("modalList").innerHTML = listHtml;
+      document.getElementById("modalOverlay").style.display = "flex";
+    } catch(e) {
+      log("Scan error: " + res, "log-err");
+    }
+  });
+}
+
+function confirmCleanOffline() {
+  closeModal();
+  log("Removing offline clips...", "log-warn");
+  cs.evalScript("removeOfflineClips()", function(res) {
+    try {
+      var parsed = JSON.parse(res);
+      if (parsed.success) {
+        log("Clean complete! Removed " + parsed.removedCount + " offline clips.", "log-ok");
+      } else {
+        log("Clean error: " + (parsed.error || res), "log-err");
+      }
+    } catch(e) {
+      log("Clean result: " + res, "log-ok");
+    }
+  });
+}
+
 function manualSync() {
   cs.evalScript("getProjectRootFolder()", function(rootFolder) {
     if (!rootFolder || rootFolder === "undefined") {
-      log("No active project found.", "err");
+      log("No active project found.", "log-err");
       return;
     }
     log("Scanning project: " + path.basename(rootFolder) + "...", "log-info");
@@ -32,7 +78,7 @@ function manualSync() {
         if (parsed.success) {
           log("Sync complete! Imported " + parsed.imported + " new files.", "log-ok");
         } else {
-          log("Sync: " + (parsed.error || res), "err");
+          log("Sync error: " + (parsed.error || res), "log-err");
         }
       } catch (e) {
         log("Sync result: " + res, "log-ok");
@@ -70,7 +116,7 @@ function watchProjectDir(dir) {
   }
 }
 
-// Check active project every 2 seconds
+// Check active project periodically
 setInterval(function() {
   cs.evalScript("getProjectRootFolder()", function(rootFolder) {
     if (rootFolder && rootFolder !== "undefined" && rootFolder !== currentWatchedDir) {
@@ -80,7 +126,6 @@ setInterval(function() {
   });
 }, 2000);
 
-// Run initial sync on panel load
 setTimeout(function() {
   cs.evalScript("getProjectRootFolder()", function(rootFolder) {
     if (rootFolder && rootFolder !== "undefined") {
