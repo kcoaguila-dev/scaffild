@@ -33,6 +33,29 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Extract Release Notes from CHANGELOG.md
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}"
+          $content = Get-Content -Raw CHANGELOG.md
+          $pattern = "(?s)## \[$tag\][^\n]*\n(.*?)(?=\n## \[|\Z)"
+          if ($content -match $pattern) {
+              $notes = $matches[1].Trim()
+          } else {
+              $notes = "Release $tag - See CHANGELOG.md for details."
+          }
+          $body = @"
+          ## What's in this release:
+          
+          $notes
+          
+          ---
+          ### 📦 Download & Installation:
+          - **Setup Wizard (\`.exe\`)**: Recommended installer with Desktop and Start Menu shortcuts.
+          - **MSI Package (\`.msi\`)**: Enterprise installer for silent and automated deployments.
+          "@
+          [System.IO.File]::WriteAllText("RELEASE_BODY.md", $body, [System.Text.Encoding]::UTF8)
+
       - name: Build Tauri App & Package Installers (MSI, NSIS, EXE)
         uses: tauri-apps/tauri-action@v0
         env:
@@ -40,16 +63,7 @@ jobs:
         with:
           tagName: ${{ github.ref_name }}
           releaseName: 'Scaffild ${{ github.ref_name }}'
-          releaseBody: |
-            ## Scaffild Production Release
-            
-            ### Included in this release:
-            - **Windows Setup Wizard (`.exe`)**: Automatic installation with desktop shortcut.
-            - **Windows MSI Installer (`.msi`)**: Enterprise / standard Windows installer.
-            - **Full 16:9 & 9:16 Social Video Templates** + Master `.prproj` and `.psd` files.
-            - **Dynamic Premiere Bins Synchronization (`SyncBins.jsx`)**.
-            - **3-2-1 Ingest Backup** with streaming `xxHash64` hardware verification.
-            - **Model Context Protocol (MCP) Server** for Claude Desktop & Cursor AI Agents.
+          bodyFile: 'RELEASE_BODY.md'
           releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}
