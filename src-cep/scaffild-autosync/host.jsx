@@ -1,4 +1,4 @@
-﻿function isMediaExtension(ext) {
+function isMediaExtension(ext) {
     var exts = ["mp4", "mov", "mxf", "mkv", "avi", "braw", "r3d", "prores", "wav", "mp3", "aac", "aif", "aiff", "m4a", "flac", "png", "jpg", "jpeg", "svg", "psd", "ai", "tif", "tiff", "exr", "heic", "dng", "webp", "bmp"];
     for (var k = 0; k < exts.length; k++) {
         if (exts[k] === ext) return true;
@@ -138,6 +138,8 @@ function findOfflineClips() {
         function scanItems(parentItem) {
             var items = parentItem.children;
             if (!items) return;
+            if (parentItem.name === "_OFFLINE_TO_DELETE") return;
+
             for (var i = 0; i < items.numItems; i++) {
                 var item = items[i];
                 if (item.type === ProjectItemType.BIN) {
@@ -157,30 +159,44 @@ function findOfflineClips() {
     }
 }
 
-function removeOfflineClips() {
+function isolateOfflineClips() {
     try {
         if (!app.project) return JSON.stringify({ error: "No active Premiere Pro project" });
 
-        var removed = 0;
+        function getOrCreateBin(name, parentBin) {
+            var items = parentBin ? parentBin.children : app.project.rootItem.children;
+            for (var i = 0; i < items.numItems; i++) {
+                var item = items[i];
+                if (item.type === ProjectItemType.BIN && item.name === name) {
+                    return item;
+                }
+            }
+            return parentBin ? parentBin.createBin(name) : app.project.rootItem.createBin(name);
+        }
 
-        function purgeOffline(parentItem) {
+        var trashBin = getOrCreateBin("_OFFLINE_TO_DELETE", null);
+        var movedCount = 0;
+
+        function scanAndMove(parentItem) {
             var items = parentItem.children;
             if (!items) return;
+            if (parentItem === trashBin || parentItem.name === "_OFFLINE_TO_DELETE") return;
+
             for (var i = items.numItems - 1; i >= 0; i--) {
                 var item = items[i];
                 if (item.type === ProjectItemType.BIN) {
-                    purgeOffline(item);
+                    scanAndMove(item);
                 } else if (item.type === ProjectItemType.CLIP || item.type === ProjectItemType.FILE) {
                     if (item.isOffline && item.isOffline()) {
-                        item.deleteItem();
-                        removed++;
+                        item.moveBin(trashBin);
+                        movedCount++;
                     }
                 }
             }
         }
 
-        purgeOffline(app.project.rootItem);
-        return JSON.stringify({ success: true, removedCount: removed });
+        scanAndMove(app.project.rootItem);
+        return JSON.stringify({ success: true, movedCount: movedCount, binName: "_OFFLINE_TO_DELETE" });
     } catch(e) {
         return JSON.stringify({ error: e.toString() });
     }

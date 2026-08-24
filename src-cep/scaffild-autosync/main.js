@@ -1,4 +1,4 @@
-﻿var cs = new CSInterface();
+var cs = new CSInterface();
 var fs = require("fs");
 var path = require("path");
 var os = require("os");
@@ -34,10 +34,10 @@ function promptCleanOffline() {
         log("No offline clips found. Project is 100% connected!", "log-ok");
         return;
       }
-      document.getElementById("modalMsg").textContent = "Found " + parsed.count + " missing clip" + (parsed.count > 1 ? "s" : "") + " deleted from disk. Remove from Premiere bins?";
+      document.getElementById("modalMsg").textContent = "Found " + parsed.count + " missing clip" + (parsed.count > 1 ? "s" : "") + " deleted from disk. Move them to _OFFLINE_TO_DELETE bin?";
       var listHtml = "";
       for (var i = 0; i < parsed.clips.length; i++) {
-        listHtml += "<div>• " + parsed.clips[i] + "</div>";
+        listHtml += "<div>� " + parsed.clips[i] + "</div>";
       }
       document.getElementById("modalList").innerHTML = listHtml;
       document.getElementById("modalOverlay").style.display = "flex";
@@ -49,12 +49,12 @@ function promptCleanOffline() {
 
 function confirmCleanOffline() {
   closeModal();
-  log("Removing offline clips...", "log-warn");
-  cs.evalScript("removeOfflineClips()", function(res) {
+  log("Isolating offline clips...", "log-warn");
+  cs.evalScript("isolateOfflineClips()", function(res) {
     try {
       var parsed = JSON.parse(res);
       if (parsed.success) {
-        log("Clean complete! Removed " + parsed.removedCount + " offline clips.", "log-ok");
+        log("Clean complete! Moved " + parsed.movedCount + " offline clips to _OFFLINE_TO_DELETE bin.", "log-ok");
       } else {
         log("Clean error: " + (parsed.error || res), "log-err");
       }
