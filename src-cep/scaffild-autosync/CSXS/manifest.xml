@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <ExtensionManifest Version="7.0" ExtensionBundleId="com.scaffild.autosync" ExtensionBundleVersion="1.0.0" ExtensionBundleName="Scaffild AutoSync">
   <ExtensionList>
     <Extension Id="com.scaffild.autosync.panel" Version="1.0.0"/>
@@ -6,6 +6,7 @@
   <ExecutionEnvironment>
     <HostList>
       <Host Name="PPRO" Version="[14.0,99.9]"/>
+      <Host Name="AEFT" Version="[17.0,99.9]"/>
     </HostList>
     <LocaleList>
       <Locale Code="All"/>

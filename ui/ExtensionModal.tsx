@@ -61,8 +61,8 @@ export default function ExtensionModal({ isOpen, onClose }: ExtensionModalProps)
             <Download size={20} />
           </div>
           <div>
-            <h3 className="text-base font-bold text-white">Premiere Pro Extension</h3>
-            <p className="text-xs text-gray-400">Real-time dynamic bin synchronization</p>
+            <h3 className="text-base font-bold text-white">Premiere & After Effects Extension</h3>
+            <p className="text-xs text-gray-400">Real-time dynamic bin and asset synchronization</p>
           </div>
         </div>
 
@@ -80,7 +80,7 @@ export default function ExtensionModal({ isOpen, onClose }: ExtensionModalProps)
             )}
           </div>
           <p className="text-gray-400 leading-relaxed text-[11px]">
-            The Scaffild AutoSync CEP extension enables Premiere Pro to automatically ingest video, audio, and graphics files from your hard drive into matching bins in real time.
+            The Scaffild AutoSync CEP extension enables Adobe Premiere Pro and After Effects to automatically ingest video, audio, and graphics files from your hard drive into matching bins and folders in real time.
           </p>
         </div>
 
@@ -110,16 +110,16 @@ export default function ExtensionModal({ isOpen, onClose }: ExtensionModalProps)
             ) : (
               <>
                 <Download size={14} />
-                <span>{isInstalled ? 'Reinstall / Update Extension' : '1-Click Install into Premiere Pro'}</span>
+                <span>{isInstalled ? 'Reinstall / Update Extension' : '1-Click Install into Premiere & After Effects'}</span>
               </>
             )}
           </button>
 
           <div className="text-[11px] text-gray-400 bg-gray-950/40 p-3 rounded-lg border border-gray-800/60 space-y-1">
-            <p className="font-semibold text-gray-300">How to open in Premiere Pro:</p>
-            <p>1. Open or restart Adobe Premiere Pro.</p>
+            <p className="font-semibold text-gray-300">How to open in Premiere Pro & After Effects:</p>
+            <p>1. Open or restart Adobe Premiere Pro or After Effects.</p>
             <p>2. Go to top menu: <span className="font-mono text-blue-400">Window &gt; Extensions &gt; Scaffild AutoSync</span>.</p>
-            <p>3. Drop files into your project folders on disk�they sync automatically!</p>
+            <p>3. Drop files into your project folders on disk -- they sync automatically!</p>
           </div>
         </div>
       </div>

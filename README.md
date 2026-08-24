@@ -7,7 +7,7 @@
 <br />
 
 [![CI Test Suite](https://github.com/kcoaguila-dev/scaffild/actions/workflows/test.yml/badge.svg)](https://github.com/kcoaguila-dev/scaffild/actions/workflows/test.yml)
-[![Release](https://img.shields.io/badge/Release-v0.1.5-blue.svg)](https://github.com/kcoaguila-dev/scaffild/releases)
+[![Release](https://img.shields.io/badge/Release-v0.1.6-blue.svg)](https://github.com/kcoaguila-dev/scaffild/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Platform: Windows](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS-informational.svg)]()
 [![Rust](https://img.shields.io/badge/Backend-Rust%20%28Tauri%20v2%29-orange.svg)]()
@@ -25,8 +25,8 @@ Ready-to-install release binaries are packaged in `dist-installers/` and availab
 
 | Installer Format | File | Description |
 | :--- | :--- | :--- |
-| **Windows Setup Wizard** | `scaffild_0.1.5_x64-setup.exe` | Standard Windows installer with Start Menu & Desktop shortcuts |
-| **Windows MSI Package** | `scaffild_0.1.5_x64_en-US.msi` | Enterprise & silent installation package |
+| **Windows Setup Wizard** | `scaffild_0.1.6_x64-setup.exe` | Standard Windows installer with Start Menu & Desktop shortcuts |
+| **Windows MSI Package** | `scaffild_0.1.6_x64_en-US.msi` | Enterprise & silent installation package |
 | **Portable Standalone** | `scaffild-portable.exe` | Zero-install standalone executable (runs from USB or NAS) |
 
 ---
@@ -92,9 +92,9 @@ graph TD
 * **`xxHash64` Hardware Checksums**: Verifies bit-for-bit integrity and generates an industry-standard `checksum_manifest.txt`.
 * **Audio Completion Notification**: Synthesized audio cue upon verification completion.
 
-### 3. Scaffild AutoSync: Autonomous Premiere Pro Live Extension
-* **Real-Time Dynamic Bin Sync**: Embedded Node.js file watcher inside Adobe Premiere Pro automatically mirrors your disk folders as nested bins in real-time as you drop files.
-* **1-Click In-App Installer**: Install directly into Premiere Pro from Scaffild's top menu (**Tools > Install Premiere Plugin...**) or bottom sync bar with zero manual file copying.
+### 3. Scaffild AutoSync: Autonomous Premiere Pro & After Effects Extension
+* **Real-Time Dynamic Bin & Asset Sync**: Embedded Node.js file watcher inside Adobe Premiere Pro and After Effects automatically mirrors your disk folders as nested bins and project folders in real-time as you drop files.
+* **1-Click In-App Installer**: Install directly into Premiere Pro and After Effects from Scaffild's top menu (**Tools > Install Adobe Plugin (Premiere & AE)...**) or bottom sync bar with zero manual file copying.
 * **Clean Offline Media Isolation**: 1-click scan that detects files deleted from disk and safely isolates them into an `_OFFLINE_TO_DELETE` bin with an interactive safety confirmation popup.
 * **Template-Agnostic**: Dynamically constructs any nested folder hierarchy on the fly with zero hardcoded folder names.
 

@@ -6,124 +6,172 @@ function isMediaExtension(ext) {
     return false;
 }
 
+function isAfterEffects() {
+    return (typeof(app.project) !== "undefined" && typeof(app.project.rootItem) === "undefined");
+}
+
 function getProjectRootFolder() {
     try {
-        if (!app.project || !app.project.path) return "";
-        var projFile = new File(app.project.path);
-        var root = projFile.parent;
-        if (root.parent && root.parent.exists) {
-            var pName = root.name.toLowerCase();
-            if (pName.indexOf("01_") === 0 || pName.indexOf("project") !== -1 || pName.indexOf("prproj") !== -1) {
-                root = root.parent;
+        if (!app.project) return "";
+        if (isAfterEffects()) {
+            if (!app.project.file) return "";
+            var projFile = app.project.file;
+            var root = projFile.parent;
+            if (root.parent && root.parent.exists) {
+                var pName = root.name.toLowerCase();
+                if (pName.indexOf("01_") === 0 || pName.indexOf("project") !== -1 || pName.indexOf("aep") !== -1) {
+                    root = root.parent;
+                }
             }
+            return root.fsName;
+        } else {
+            if (!app.project.path) return "";
+            var projFile = new File(app.project.path);
+            var root = projFile.parent;
+            if (root.parent && root.parent.exists) {
+                var pName = root.name.toLowerCase();
+                if (pName.indexOf("01_") === 0 || pName.indexOf("project") !== -1 || pName.indexOf("prproj") !== -1) {
+                    root = root.parent;
+                }
+            }
+            return root.fsName;
         }
-        return root.fsName;
     } catch(e) {
         return "";
     }
 }
 
-function importMediaToTargetBin(filePath, binHierarchy) {
-    try {
-        if (!app.project) return JSON.stringify({ error: "No active Premiere Pro project" });
-
-        function getOrCreateBin(name, parentBin) {
-            var items = parentBin ? parentBin.children : app.project.rootItem.children;
-            for (var i = 0; i < items.numItems; i++) {
-                var item = items[i];
-                if (item.type === ProjectItemType.BIN && item.name === name) {
-                    return item;
-                }
-            }
-            return parentBin ? parentBin.createBin(name) : app.project.rootItem.createBin(name);
-        }
-
-        var targetBin = null;
-        if (binHierarchy && binHierarchy.length > 0) {
-            for (var i = 0; i < binHierarchy.length; i++) {
-                targetBin = getOrCreateBin(binHierarchy[i], targetBin);
-            }
-        } else {
-            targetBin = app.project.rootItem;
-        }
-
-        var fileName = filePath.replace(/^.*[\\\/]/, '');
-        for (var j = 0; j < targetBin.children.numItems; j++) {
-            if (targetBin.children[j].name === fileName) {
-                return JSON.stringify({ success: true, alreadyImported: true, file: filePath });
-            }
-        }
-
-        app.project.importFiles([filePath], false, targetBin, false);
-        return JSON.stringify({ success: true, imported: filePath, bin: targetBin.name });
-    } catch (e) {
-        return JSON.stringify({ error: e.toString() });
-    }
-}
-
 function syncEntireProjectFolder(rootFolderPath) {
     try {
-        if (!app.project) return JSON.stringify({ error: "No active Premiere project" });
+        if (!app.project) return JSON.stringify({ error: "No active project" });
         var root = new Folder(rootFolderPath);
         if (!root.exists) return JSON.stringify({ error: "Folder does not exist" });
 
-        function getOrCreateBin(name, parentBin) {
-            var items = parentBin ? parentBin.children : app.project.rootItem.children;
-            for (var i = 0; i < items.numItems; i++) {
-                var item = items[i];
-                if (item.type === ProjectItemType.BIN && item.name === name) {
-                    return item;
-                }
-            }
-            return parentBin ? parentBin.createBin(name) : app.project.rootItem.createBin(name);
-        }
-
+        var isAE = isAfterEffects();
         var importedCount = 0;
 
-        function traverseAndSync(dir, parentBin) {
-            var files = dir.getFiles();
-            if (!files) return;
-
-            var mediaToImport = [];
-            for (var i = 0; i < files.length; i++) {
-                var f = files[i];
-                var name = f.name;
-                if (name.indexOf(".") === 0) continue;
-
-                if (f instanceof Folder) {
-                    var lower = name.toLowerCase();
-                    if (lower.indexOf("01_project") === 0 || lower.indexOf("auto-save") !== -1 || lower.indexOf("preview") !== -1) {
-                        continue;
+        if (isAE) {
+            function getOrCreateAEFolder(name, parentFolder) {
+                var pFolder = parentFolder || app.project.rootFolder;
+                for (var i = 1; i <= app.project.numItems; i++) {
+                    var it = app.project.item(i);
+                    if (it instanceof FolderItem && it.name === name && it.parentFolder === pFolder) {
+                        return it;
                     }
-                    var bin = getOrCreateBin(name, parentBin);
-                    traverseAndSync(f, bin);
-                } else if (f instanceof File) {
-                    var ext = name.split('.').pop().toLowerCase();
-                    if (isMediaExtension(ext) && ext !== "prproj") {
-                        var target = parentBin || app.project.rootItem;
-                        var exists = false;
-                        for (var j = 0; j < target.children.numItems; j++) {
-                            if (target.children[j].name === name) {
-                                exists = true;
-                                break;
-                            }
+                }
+                var newFolder = app.project.items.addFolder(name);
+                if (parentFolder) {
+                    newFolder.parentFolder = parentFolder;
+                }
+                return newFolder;
+            }
+
+            function isAEAlreadyImported(fileName, parentFolder) {
+                var pFolder = parentFolder || app.project.rootFolder;
+                for (var i = 1; i <= app.project.numItems; i++) {
+                    var it = app.project.item(i);
+                    if (it.name === fileName && it.parentFolder === pFolder) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            function traverseAESync(dir, parentFolder) {
+                var files = dir.getFiles();
+                if (!files) return;
+
+                for (var i = 0; i < files.length; i++) {
+                    var f = files[i];
+                    var name = f.name;
+                    if (name.indexOf(".") === 0) continue;
+
+                    if (f instanceof Folder) {
+                        var lower = name.toLowerCase();
+                        if (lower.indexOf("01_project") === 0 || lower.indexOf("auto-save") !== -1 || lower.indexOf("preview") !== -1) {
+                            continue;
                         }
-                        if (!exists) {
-                            mediaToImport.push(f.fsName);
+                        var folder = getOrCreateAEFolder(name, parentFolder);
+                        traverseAESync(f, folder);
+                    } else if (f instanceof File) {
+                        var ext = name.split('.').pop().toLowerCase();
+                        if (isMediaExtension(ext) && ext !== "aep" && ext !== "prproj") {
+                            if (!isAEAlreadyImported(name, parentFolder)) {
+                                try {
+                                    var impOpt = new ImportOptions(f);
+                                    var impItem = app.project.importFile(impOpt);
+                                    if (parentFolder && impItem) {
+                                        impItem.parentFolder = parentFolder;
+                                    }
+                                    importedCount++;
+                                } catch(err) {}
+                            }
                         }
                     }
                 }
             }
 
-            if (mediaToImport.length > 0) {
-                var targetBin = parentBin || app.project.rootItem;
-                app.project.importFiles(mediaToImport, false, targetBin, false);
-                importedCount += mediaToImport.length;
-            }
-        }
+            traverseAESync(root, null);
+            return JSON.stringify({ success: true, imported: importedCount, host: "After Effects" });
 
-        traverseAndSync(root, null);
-        return JSON.stringify({ success: true, imported: importedCount });
+        } else {
+            // Premiere Pro logic
+            function getOrCreateBin(name, parentBin) {
+                var items = parentBin ? parentBin.children : app.project.rootItem.children;
+                for (var i = 0; i < items.numItems; i++) {
+                    var item = items[i];
+                    if (item.type === ProjectItemType.BIN && item.name === name) {
+                        return item;
+                    }
+                }
+                return parentBin ? parentBin.createBin(name) : app.project.rootItem.createBin(name);
+            }
+
+            function traversePProSync(dir, parentBin) {
+                var files = dir.getFiles();
+                if (!files) return;
+
+                var mediaToImport = [];
+                for (var i = 0; i < files.length; i++) {
+                    var f = files[i];
+                    var name = f.name;
+                    if (name.indexOf(".") === 0) continue;
+
+                    if (f instanceof Folder) {
+                        var lower = name.toLowerCase();
+                        if (lower.indexOf("01_project") === 0 || lower.indexOf("auto-save") !== -1 || lower.indexOf("preview") !== -1) {
+                            continue;
+                        }
+                        var bin = getOrCreateBin(name, parentBin);
+                        traversePProSync(f, bin);
+                    } else if (f instanceof File) {
+                        var ext = name.split('.').pop().toLowerCase();
+                        if (isMediaExtension(ext) && ext !== "prproj") {
+                            var target = parentBin || app.project.rootItem;
+                            var exists = false;
+                            for (var j = 0; j < target.children.numItems; j++) {
+                                if (target.children[j].name === name) {
+                                    exists = true;
+                                    break;
+                                }
+                            }
+                            if (!exists) {
+                                mediaToImport.push(f.fsName);
+                            }
+                        }
+                    }
+                }
+
+                if (mediaToImport.length > 0) {
+                    var targetBin = parentBin || app.project.rootItem;
+                    app.project.importFiles(mediaToImport, false, targetBin, false);
+                    importedCount += mediaToImport.length;
+                }
+            }
+
+            traversePProSync(root, null);
+            return JSON.stringify({ success: true, imported: importedCount, host: "Premiere Pro" });
+        }
     } catch(e) {
         return JSON.stringify({ error: e.toString() });
     }
@@ -131,28 +179,39 @@ function syncEntireProjectFolder(rootFolderPath) {
 
 function findOfflineClips() {
     try {
-        if (!app.project) return JSON.stringify({ error: "No active Premiere Pro project" });
+        if (!app.project) return JSON.stringify({ error: "No active project" });
 
         var offlineClips = [];
 
-        function scanItems(parentItem) {
-            var items = parentItem.children;
-            if (!items) return;
-            if (parentItem.name === "_OFFLINE_TO_DELETE") return;
-
-            for (var i = 0; i < items.numItems; i++) {
-                var item = items[i];
-                if (item.type === ProjectItemType.BIN) {
-                    scanItems(item);
-                } else if (item.type === ProjectItemType.CLIP || item.type === ProjectItemType.FILE) {
-                    if (item.isOffline && item.isOffline()) {
-                        offlineClips.push(item.name);
+        if (isAfterEffects()) {
+            for (var i = 1; i <= app.project.numItems; i++) {
+                var it = app.project.item(i);
+                if (it instanceof FootageItem && it.footageMissing) {
+                    if (!it.parentFolder || it.parentFolder.name !== "_OFFLINE_TO_DELETE") {
+                        offlineClips.push(it.name);
                     }
                 }
             }
+        } else {
+            function scanItems(parentItem) {
+                var items = parentItem.children;
+                if (!items) return;
+                if (parentItem.name === "_OFFLINE_TO_DELETE") return;
+
+                for (var i = 0; i < items.numItems; i++) {
+                    var item = items[i];
+                    if (item.type === ProjectItemType.BIN) {
+                        scanItems(item);
+                    } else if (item.type === ProjectItemType.CLIP || item.type === ProjectItemType.FILE) {
+                        if (item.isOffline && item.isOffline()) {
+                            offlineClips.push(item.name);
+                        }
+                    }
+                }
+            }
+            scanItems(app.project.rootItem);
         }
 
-        scanItems(app.project.rootItem);
         return JSON.stringify({ success: true, count: offlineClips.length, clips: offlineClips });
     } catch(e) {
         return JSON.stringify({ error: e.toString() });
@@ -161,41 +220,64 @@ function findOfflineClips() {
 
 function isolateOfflineClips() {
     try {
-        if (!app.project) return JSON.stringify({ error: "No active Premiere Pro project" });
+        if (!app.project) return JSON.stringify({ error: "No active project" });
 
-        function getOrCreateBin(name, parentBin) {
-            var items = parentBin ? parentBin.children : app.project.rootItem.children;
-            for (var i = 0; i < items.numItems; i++) {
-                var item = items[i];
-                if (item.type === ProjectItemType.BIN && item.name === name) {
-                    return item;
-                }
-            }
-            return parentBin ? parentBin.createBin(name) : app.project.rootItem.createBin(name);
-        }
-
-        var trashBin = getOrCreateBin("_OFFLINE_TO_DELETE", null);
         var movedCount = 0;
 
-        function scanAndMove(parentItem) {
-            var items = parentItem.children;
-            if (!items) return;
-            if (parentItem === trashBin || parentItem.name === "_OFFLINE_TO_DELETE") return;
+        if (isAfterEffects()) {
+            function getOrCreateAEFolder(name) {
+                for (var i = 1; i <= app.project.numItems; i++) {
+                    var it = app.project.item(i);
+                    if (it instanceof FolderItem && it.name === name && it.parentFolder === app.project.rootFolder) {
+                        return it;
+                    }
+                }
+                return app.project.items.addFolder(name);
+            }
 
-            for (var i = items.numItems - 1; i >= 0; i--) {
-                var item = items[i];
-                if (item.type === ProjectItemType.BIN) {
-                    scanAndMove(item);
-                } else if (item.type === ProjectItemType.CLIP || item.type === ProjectItemType.FILE) {
-                    if (item.isOffline && item.isOffline()) {
-                        item.moveBin(trashBin);
-                        movedCount++;
+            var trashFolder = getOrCreateAEFolder("_OFFLINE_TO_DELETE");
+            for (var i = 1; i <= app.project.numItems; i++) {
+                var it = app.project.item(i);
+                if (it instanceof FootageItem && it.footageMissing && it.parentFolder !== trashFolder) {
+                    it.parentFolder = trashFolder;
+                    movedCount++;
+                }
+            }
+        } else {
+            function getOrCreateBin(name, parentBin) {
+                var items = parentBin ? parentBin.children : app.project.rootItem.children;
+                for (var i = 0; i < items.numItems; i++) {
+                    var item = items[i];
+                    if (item.type === ProjectItemType.BIN && item.name === name) {
+                        return item;
+                    }
+                }
+                return parentBin ? parentBin.createBin(name) : app.project.rootItem.createBin(name);
+            }
+
+            var trashBin = getOrCreateBin("_OFFLINE_TO_DELETE", null);
+
+            function scanAndMove(parentItem) {
+                var items = parentItem.children;
+                if (!items) return;
+                if (parentItem === trashBin || parentItem.name === "_OFFLINE_TO_DELETE") return;
+
+                for (var i = items.numItems - 1; i >= 0; i--) {
+                    var item = items[i];
+                    if (item.type === ProjectItemType.BIN) {
+                        scanAndMove(item);
+                    } else if (item.type === ProjectItemType.CLIP || item.type === ProjectItemType.FILE) {
+                        if (item.isOffline && item.isOffline()) {
+                            item.moveBin(trashBin);
+                            movedCount++;
+                        }
                     }
                 }
             }
+
+            scanAndMove(app.project.rootItem);
         }
 
-        scanAndMove(app.project.rootItem);
         return JSON.stringify({ success: true, movedCount: movedCount, binName: "_OFFLINE_TO_DELETE" });
     } catch(e) {
         return JSON.stringify({ error: e.toString() });

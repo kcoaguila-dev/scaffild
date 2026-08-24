@@ -279,7 +279,7 @@ export default function MenuBar({
               }}
               className="px-3 py-1.5 hover:bg-blue-600 hover:text-white flex items-center justify-between cursor-pointer text-blue-300 font-medium"
             >
-              <span>Install Premiere Plugin...</span>
+              <span>Install Adobe Plugin (Premiere & AE)...</span>
               <span className="text-[10px] bg-blue-900/60 text-blue-200 px-1 rounded">CEP</span>
             </div>
             {onOpenMcpSetup && (
