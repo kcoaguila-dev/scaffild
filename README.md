@@ -92,9 +92,11 @@ graph TD
 * **`xxHash64` Hardware Checksums**: Verifies bit-for-bit integrity and generates an industry-standard `checksum_manifest.txt`.
 * **Audio Completion Notification**: Synthesized audio cue upon verification completion.
 
-### 3. Premiere Pro Media Organization & Companion Script (`SyncBins.jsx`)
-* **Instant Drag-and-Drop Ingest**: Dragging your scaffolding folders (`02_FOOTAGE`, `03_AUDIO`, `04_GRAPHICS`) directly from File Explorer into Premiere Pro's Project Panel automatically preserves folder structures as native Bins.
-* **`SyncBins.jsx` Automation Companion**: Placed inside `01_PROJECT_FILES/` alongside your `.prproj` for automation workflows, CEP extensions, and ExtendScript runners to auto-populate bins and organize sequences.
+### 3. Scaffild AutoSync: Autonomous Premiere Pro Live Extension
+* **Real-Time Dynamic Bin Sync**: Embedded Node.js file watcher inside Adobe Premiere Pro automatically mirrors your disk folders as nested bins in real-time as you drop files.
+* **1-Click In-App Installer**: Install directly into Premiere Pro from Scaffild's top menu (**Tools > Install Premiere Plugin...**) or bottom sync bar with zero manual file copying.
+* **Clean Offline Media Isolation**: 1-click scan that detects files deleted from disk and safely isolates them into an `_OFFLINE_TO_DELETE` bin with an interactive safety confirmation popup.
+* **Template-Agnostic**: Dynamically constructs any nested folder hierarchy on the fly with zero hardcoded folder names.
 
 ### 4. Built-in AI Agent Server (Model Context Protocol - MCP)
 Connect **Claude Desktop**, **Cursor**, or **Antigravity** to Scaffild:
