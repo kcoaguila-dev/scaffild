@@ -1,4 +1,4 @@
-function isMediaExtension(ext) {
+﻿function isMediaExtension(ext) {
     var exts = ["mp4", "mov", "mxf", "mkv", "avi", "braw", "r3d", "prores", "wav", "mp3", "aac", "aif", "aiff", "m4a", "flac", "png", "jpg", "jpeg", "svg", "psd", "ai", "tif", "tiff", "exr", "heic", "dng", "webp", "bmp"];
     for (var k = 0; k < exts.length; k++) {
         if (exts[k] === ext) return true;
@@ -41,6 +41,26 @@ function getProjectRootFolder() {
     }
 }
 
+// Build a global set of ALL file paths already imported anywhere in the project.
+// Uses getMediaPath() for path-based deduplication (not name-based).
+function buildPProImportedPathsSet(parentItem, result) {
+    var items = parentItem.children;
+    if (!items) return;
+    for (var i = 0; i < items.numItems; i++) {
+        var item = items[i];
+        if (item.type === ProjectItemType.BIN) {
+            buildPProImportedPathsSet(item, result);
+        } else {
+            try {
+                var p = item.getMediaPath();
+                if (p) {
+                    result[p.toLowerCase()] = true;
+                }
+            } catch(e) {}
+        }
+    }
+}
+
 function syncEntireProjectFolder(rootFolderPath) {
     try {
         if (!app.project) return JSON.stringify({ error: "No active project" });
@@ -80,29 +100,23 @@ function syncEntireProjectFolder(rootFolderPath) {
             function traverseAESync(dir, parentFolder) {
                 var files = dir.getFiles();
                 if (!files) return;
-
                 for (var i = 0; i < files.length; i++) {
                     var f = files[i];
                     var name = f.name;
                     if (name.indexOf(".") === 0) continue;
-
                     if (f instanceof Folder) {
                         var lower = name.toLowerCase();
-                        if (lower.indexOf("01_project") === 0 || lower.indexOf("auto-save") !== -1 || lower.indexOf("preview") !== -1) {
-                            continue;
-                        }
+                        if (lower.indexOf("01_project") === 0 || lower.indexOf("auto-save") !== -1 || lower.indexOf("preview") !== -1) continue;
                         var folder = getOrCreateAEFolder(name, parentFolder);
                         traverseAESync(f, folder);
                     } else if (f instanceof File) {
-                        var ext = name.split('.').pop().toLowerCase();
+                        var ext = name.split(".").pop().toLowerCase();
                         if (isMediaExtension(ext) && ext !== "aep" && ext !== "prproj") {
                             if (!isAEAlreadyImported(name, parentFolder)) {
                                 try {
                                     var impOpt = new ImportOptions(f);
                                     var impItem = app.project.importFile(impOpt);
-                                    if (parentFolder && impItem) {
-                                        impItem.parentFolder = parentFolder;
-                                    }
+                                    if (parentFolder && impItem) impItem.parentFolder = parentFolder;
                                     importedCount++;
                                 } catch(err) {}
                             }
@@ -115,14 +129,15 @@ function syncEntireProjectFolder(rootFolderPath) {
             return JSON.stringify({ success: true, imported: importedCount, host: "After Effects" });
 
         } else {
-            // Premiere Pro logic
+            // Premiere Pro: build a global path set ONCE before traversal
+            var importedPaths = {};
+            buildPProImportedPathsSet(app.project.rootItem, importedPaths);
+
             function getOrCreateBin(name, parentBin) {
                 var items = parentBin ? parentBin.children : app.project.rootItem.children;
                 for (var i = 0; i < items.numItems; i++) {
                     var item = items[i];
-                    if (item.type === ProjectItemType.BIN && item.name === name) {
-                        return item;
-                    }
+                    if (item.type === ProjectItemType.BIN && item.name === name) return item;
                 }
                 return parentBin ? parentBin.createBin(name) : app.project.rootItem.createBin(name);
             }
@@ -136,27 +151,19 @@ function syncEntireProjectFolder(rootFolderPath) {
                     var f = files[i];
                     var name = f.name;
                     if (name.indexOf(".") === 0) continue;
-
                     if (f instanceof Folder) {
                         var lower = name.toLowerCase();
-                        if (lower.indexOf("01_project") === 0 || lower.indexOf("auto-save") !== -1 || lower.indexOf("preview") !== -1) {
-                            continue;
-                        }
+                        if (lower.indexOf("01_project") === 0 || lower.indexOf("auto-save") !== -1 || lower.indexOf("preview") !== -1) continue;
                         var bin = getOrCreateBin(name, parentBin);
                         traversePProSync(f, bin);
                     } else if (f instanceof File) {
-                        var ext = name.split('.').pop().toLowerCase();
+                        var ext = name.split(".").pop().toLowerCase();
                         if (isMediaExtension(ext) && ext !== "prproj") {
-                            var target = parentBin || app.project.rootItem;
-                            var exists = false;
-                            for (var j = 0; j < target.children.numItems; j++) {
-                                if (target.children[j].name === name) {
-                                    exists = true;
-                                    break;
-                                }
-                            }
-                            if (!exists) {
+                            var fsPath = f.fsName.toLowerCase();
+                            // Global path check - no duplicate regardless of which bin it is in
+                            if (!importedPaths[fsPath]) {
                                 mediaToImport.push(f.fsName);
+                                importedPaths[fsPath] = true; // mark immediately to block re-queuing
                             }
                         }
                     }
@@ -180,9 +187,7 @@ function syncEntireProjectFolder(rootFolderPath) {
 function findOfflineClips() {
     try {
         if (!app.project) return JSON.stringify({ error: "No active project" });
-
         var offlineClips = [];
-
         if (isAfterEffects()) {
             for (var i = 1; i <= app.project.numItems; i++) {
                 var it = app.project.item(i);
@@ -197,7 +202,6 @@ function findOfflineClips() {
                 var items = parentItem.children;
                 if (!items) return;
                 if (parentItem.name === "_OFFLINE_TO_DELETE") return;
-
                 for (var i = 0; i < items.numItems; i++) {
                     var item = items[i];
                     if (item.type === ProjectItemType.BIN) {
@@ -211,7 +215,6 @@ function findOfflineClips() {
             }
             scanItems(app.project.rootItem);
         }
-
         return JSON.stringify({ success: true, count: offlineClips.length, clips: offlineClips });
     } catch(e) {
         return JSON.stringify({ error: e.toString() });
@@ -221,20 +224,15 @@ function findOfflineClips() {
 function isolateOfflineClips() {
     try {
         if (!app.project) return JSON.stringify({ error: "No active project" });
-
         var movedCount = 0;
-
         if (isAfterEffects()) {
             function getOrCreateAEFolder(name) {
                 for (var i = 1; i <= app.project.numItems; i++) {
                     var it = app.project.item(i);
-                    if (it instanceof FolderItem && it.name === name && it.parentFolder === app.project.rootFolder) {
-                        return it;
-                    }
+                    if (it instanceof FolderItem && it.name === name && it.parentFolder === app.project.rootFolder) return it;
                 }
                 return app.project.items.addFolder(name);
             }
-
             var trashFolder = getOrCreateAEFolder("_OFFLINE_TO_DELETE");
             for (var i = 1; i <= app.project.numItems; i++) {
                 var it = app.project.item(i);
@@ -248,20 +246,15 @@ function isolateOfflineClips() {
                 var items = parentBin ? parentBin.children : app.project.rootItem.children;
                 for (var i = 0; i < items.numItems; i++) {
                     var item = items[i];
-                    if (item.type === ProjectItemType.BIN && item.name === name) {
-                        return item;
-                    }
+                    if (item.type === ProjectItemType.BIN && item.name === name) return item;
                 }
                 return parentBin ? parentBin.createBin(name) : app.project.rootItem.createBin(name);
             }
-
             var trashBin = getOrCreateBin("_OFFLINE_TO_DELETE", null);
-
             function scanAndMove(parentItem) {
                 var items = parentItem.children;
                 if (!items) return;
                 if (parentItem === trashBin || parentItem.name === "_OFFLINE_TO_DELETE") return;
-
                 for (var i = items.numItems - 1; i >= 0; i--) {
                     var item = items[i];
                     if (item.type === ProjectItemType.BIN) {
@@ -274,10 +267,8 @@ function isolateOfflineClips() {
                     }
                 }
             }
-
             scanAndMove(app.project.rootItem);
         }
-
         return JSON.stringify({ success: true, movedCount: movedCount, binName: "_OFFLINE_TO_DELETE" });
     } catch(e) {
         return JSON.stringify({ error: e.toString() });
