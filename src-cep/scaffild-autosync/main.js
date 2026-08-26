@@ -6,6 +6,7 @@ var os = require("os");
 var currentWatchedDir = "";
 var activeWatcher = null;
 var syncTimeout = null;
+var isSyncing = false;
 
 function log(msg, cls) {
   var el = document.getElementById("log");
@@ -37,7 +38,7 @@ function promptCleanOffline() {
       document.getElementById("modalMsg").textContent = "Found " + parsed.count + " missing clip" + (parsed.count > 1 ? "s" : "") + " deleted from disk. Move them to _OFFLINE_TO_DELETE bin?";
       var listHtml = "";
       for (var i = 0; i < parsed.clips.length; i++) {
-        listHtml += "<div>� " + parsed.clips[i] + "</div>";
+        listHtml += "<div>- " + parsed.clips[i] + "</div>";
       }
       document.getElementById("modalList").innerHTML = listHtml;
       document.getElementById("modalOverlay").style.display = "flex";
@@ -65,18 +66,30 @@ function confirmCleanOffline() {
 }
 
 function manualSync() {
+  if (isSyncing) {
+    log("Sync already running, skipping duplicate trigger.", "log-info");
+    return;
+  }
+  isSyncing = true;
+
   cs.evalScript("getProjectRootFolder()", function(rootFolder) {
     if (!rootFolder || rootFolder === "undefined") {
       log("No active project found.", "log-err");
+      isSyncing = false;
       return;
     }
     log("Scanning project: " + path.basename(rootFolder) + "...", "log-info");
     var escaped = rootFolder.replace(/\\/g, "\\\\");
     cs.evalScript("syncEntireProjectFolder('" + escaped + "')", function(res) {
+      isSyncing = false;
       try {
         var parsed = JSON.parse(res);
         if (parsed.success) {
-          log("Sync complete! Imported " + parsed.imported + " new files.", "log-ok");
+          if (parsed.imported > 0) {
+            log("Sync complete! Imported " + parsed.imported + " new files.", "log-ok");
+          } else {
+            log("Sync complete! No new files.", "log-ok");
+          }
         } else {
           log("Sync error: " + (parsed.error || res), "log-err");
         }
@@ -109,14 +122,14 @@ function watchProjectDir(dir) {
       syncTimeout = setTimeout(function() {
         log("Detected change: " + path.basename(filename) + " -> AutoSyncing...", "log-info");
         manualSync();
-      }, 400);
+      }, 1500);
     });
   } catch(e) {
     log("Watcher notice: " + e.message, "log-info");
   }
 }
 
-// Check active project periodically
+// Check active project periodically - only switch project, do not auto-sync again
 setInterval(function() {
   cs.evalScript("getProjectRootFolder()", function(rootFolder) {
     if (rootFolder && rootFolder !== "undefined" && rootFolder !== currentWatchedDir) {
@@ -124,7 +137,7 @@ setInterval(function() {
       manualSync();
     }
   });
-}, 2000);
+}, 5000);
 
 setTimeout(function() {
   cs.evalScript("getProjectRootFolder()", function(rootFolder) {
